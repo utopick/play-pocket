@@ -1,22 +1,24 @@
 <!doctype html>
 <!--
   PLAY.Pocket - pocket guitar rig: plug an instrument into the phone or an audio interface and play it through
-  pedals, amps and cabs laid out on a board (later a looper). Sister app of TRACK.Pocket, TUNE.Pocket and SING.Pocket. One
+  pedals, amps and cabs laid out on a board, with backing tracks and a looper. Sister app of TRACK.Pocket, TUNE.Pocket and SING.Pocket. One
   self-contained file, no network requests. PROTOTYPE.
   The base styles, the six themes and the help dialog are shared with the sister apps (copied from SING.Pocket).
 
   Layout of this file
     <head>    theme bootstrap (reads localStorage before first paint), <style>
-    <body>    header, the rig view (pedals, amps and cabs share it), board, mixer and files, bottom bar, unit picker,
+    <body>    header, the rig view (pedals, amps and cabs share it), board, looper, tracks, mixer and files, bottom bar, unit picker,
               latency test, help, toast
     <script>  helpers, units (PEDALS, AMPS, CABS: docs/UNITS.md says where each comes from), state, options, audio
-              engine (input, test riff, faders, the board's units in order, worklets), rig view and knobs, board,
-              mixer, views, files tab (board, theme, stats, input, engine), latency test, help, boot
+              engine (input, test riff, faders, the board's units in order, worklets), test riff, rig view and knobs,
+              board, mixer, looper (clock, pads, recording), tracks, views, files tab (board, theme, stats, input, engine), latency test, help, boot
 
   Storage
     localStorage  play.state   { sel: { pedal, amp, cab: index shown }, fx: { <unit id>: { on, <knob id>: value } },
                                  slots: [15 unit ids in signal order, "" = empty square],
-                                 mix: { gtr | riff | master: { v: 0..1.5, m: muted } } }
+                                 mix: { gtr | riff | trk | loop | click | master: { v: 0..1.5, m: muted } },
+                                 loop: { bpm: 40..240, bars: 1 | 2 | 4 | 8, click: bool, trLoop: repeat tracks } }
+    IndexedDB     "play-pocket" / tracks: { id, name, size, blob }: the backing tracks you add (loops are not kept)
                   play.audioIn { dev, ch: mix | L | R, gains: { <device id or "default">: dB } }
                   play.audioOut { dev: output device id ("" = system default), label }
                   play.opts    { rate: input | browser | 44100 | 48000, hint: interactive | 0.005 | balanced | playback,
@@ -363,9 +365,11 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
       html[data-theme="light"] { --acc: #e07b00; --brand: #e07b00; --ink: #ffffff; --playbg: #fde3c0; --playbg2: #fcd6a4; }
       header .hv { width: 44px; height: 44px; min-height: 0; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 6px; flex: none; }
       header #hBoard { margin-left: auto; }
-      header .hv + .hv { margin-left: 4px; }
+      header .hv + .hv { margin-left: 2px; }
       header .hv.on { background: var(--acc); border-color: var(--acc); color: var(--ink); }
-      #lvl { flex: 1; max-width: 140px; height: 8px; margin: 0 10px; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+      body.pocket header { position: relative; }
+      header .hv { width: 42px !important; }
+      #lvl { position: absolute; left: 6px; right: 6px; bottom: 0; height: 3px; border-radius: 2px; overflow: hidden; background: var(--line); }
       #lvl i { display: block; height: 100%; width: 0; background: var(--acc); }
       #lvl.clip i { background: var(--hot); }
       main > section.show { display: flex; }
@@ -473,6 +477,30 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
       #bRib, #mRib { height: 52px; margin: 0 6px; }
       #bRib > button, #mRib > button { flex: 1; font-size: 12px; }
       .riffBtn.on { background: var(--acc); border-color: var(--acc); color: var(--ink); }
+      /* LOOPER: settings row, 16 pads, the ribbon */
+      #loop .row, #tracks .row { display: flex; gap: 6px; margin: 6px 6px 0; }
+      #loop select { flex: 1; min-width: 0; }
+      #lClick { flex: 1; }
+      #lPads { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 1fr; gap: 6px; margin: 6px; }
+      .pad { position: relative; min-height: 0; padding: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; overflow: hidden; font: 800 10px var(--mono); border-radius: 8px; }
+      .pad b { position: absolute; left: 5px; top: 3px; font: 700 9px var(--mono); opacity: 0.6; }
+      .pad.empty { border-style: dashed; color: var(--dim); }
+      .pad.has { background: color-mix(in srgb, var(--acc) 22%, var(--panel)); }
+      .pad.on { background: var(--acc); border-color: var(--acc); color: var(--ink); }
+      .pad.rec { background: var(--hot); border-color: var(--hot); color: #fff; }
+      .pad.sel { outline: 3px solid var(--text); outline-offset: 1px; }
+      .pad i { position: absolute; left: 0; bottom: 0; height: 4px; width: 0; background: currentColor; opacity: 0.7; }
+      #lRib, #tRib { height: 52px; margin: 0 6px; }
+      #lRib > button, #tRib > button { flex: 1; font-size: 12px; }
+      #loop, #tracks { padding-bottom: 6px; }
+      /* TRACKS */
+      #trList { margin: 6px; flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 6px; }
+      .trk { display: flex; gap: 6px; }
+      .trk .tp { flex: 1; min-width: 0; justify-content: flex-start; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+      .trk .tp.on { background: var(--acc); border-color: var(--acc); color: var(--ink); }
+      .trk .td { width: 52px; flex: none; }
+      .trk .td.sure { background: var(--hot); border-color: var(--hot); color: #fff; }
+      #tracks .hint { margin: 0 6px 6px; }
       /* the unit picker */
       #pick { position: fixed; inset: 0; z-index: 80; background: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; }
       #pick .card { width: min(100%, 520px); max-height: 92%; overflow: auto; display: flex; flex-direction: column; gap: 6px; }
@@ -513,6 +541,12 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
       <button class="hv" id="hBoard" data-v="board" title="Board: the order of your pedals, amps and cabs">
         <svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1" /><rect x="13" y="3" width="8" height="8" rx="1" /><rect x="3" y="13" width="8" height="8" rx="1" /><rect x="13" y="13" width="8" height="8" rx="1" /></svg>
       </button>
+      <button class="hv" id="hLoop" data-v="loop" title="Looper: record loops in time and play over them">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M17 7H8a5 5 0 0 0 0 10h1M7 17h9a5 5 0 0 0 0-10h-1" /><path d="M14 4l3 3-3 3M10 14l-3 3 3 3" /></svg>
+      </button>
+      <button class="hv" id="hTracks" data-v="tracks" title="Tracks: your own backing tracks to play along with">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="17" cy="16" r="3" /></svg>
+      </button>
       <button class="hv" id="hMix" data-v="mix" title="Mixer: the volume of the guitar, the test riff and the master">
         <svg class="ic" viewBox="0 0 24 24"><path d="M6 3v18M12 3v18M18 3v18" /><rect x="4" y="13" width="4" height="3" /><rect x="10" y="6" width="4" height="3" /><rect x="16" y="10" width="4" height="3" /></svg>
       </button>
@@ -543,6 +577,32 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
           <button id="bEdit" title="Open the chosen unit to turn its knobs"><i>KNOBS</i>EDIT</button>
           <button id="bDel" title="Take the chosen unit off the board"><i>UNIT</i>REMOVE</button>
         </div>
+      </section>
+      <!-- LOOPER: tap an empty pad, it counts in and records; tap a loop to play or stop it -->
+      <section id="loop">
+        <div class="row">
+          <select id="lBpm" title="Tempo of the loops and the click"></select>
+          <select id="lBars" title="How long a new loop is"><option value="1">1 BAR</option><option value="2">2 BARS</option><option value="4">4 BARS</option><option value="8">8 BARS</option></select>
+          <button id="lClick" title="The click on or off while loops play (the count-in always clicks)"></button>
+        </div>
+        <div id="lPads"></div>
+        <div class="prow" id="lRib">
+          <button id="lAll" title="Play every loop, or stop them all"><i>LOOPS</i>PLAY ALL</button>
+          <button id="lOver" title="Record another layer on top of the chosen loop"><i>ADD LAYER</i>OVERDUB</button>
+          <button id="lClr" title="Delete the chosen loop"><i>THIS</i>CLEAR</button>
+          <button id="lClrAll" title="Delete every loop"><i>ALL</i>CLEAR</button>
+        </div>
+      </section>
+      <!-- TRACKS: your own backing tracks -->
+      <section id="tracks">
+        <div id="trList"></div>
+        <div class="hint">Add songs or backing tracks from this device (MP3, WAV, OGG, M4A...). They are kept here, never uploaded. Tap one to play it, again to stop. They go to the TRACKS fader in the MIXER, not through the board.</div>
+        <div class="prow" id="tRib">
+          <button id="trAdd" title="Add audio files from this device"><i>FILES</i>ADD</button>
+          <button id="trLoop" title="Repeat the track when it ends"></button>
+          <button id="trStop" title="Stop the track"><i>TRACK</i>STOP</button>
+        </div>
+        <input type="file" id="trFile" accept="audio/*,.mp3,.wav,.ogg,.m4a,.flac,.aac,.opus" multiple hidden />
       </section>
       <!-- MIXER -->
       <section id="mix">
@@ -646,7 +706,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
 
     <script>
       "use strict";
-      const APP_VERSION = "0.3.0";
+      const APP_VERSION = "0.4.0";
       // ======================================================================
       // helpers
       // ======================================================================
@@ -1073,7 +1133,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         });
         return out;
       }
-      const MIX0 = { gtr: { v: 1, m: false }, riff: { v: 0.8, m: false }, master: { v: 0.8, m: false } };
+      const MIX0 = { gtr: { v: 1, m: false }, riff: { v: 0.8, m: false }, trk: { v: 0.8, m: false }, loop: { v: 1, m: false }, click: { v: 0.7, m: false }, master: { v: 0.8, m: false } };
       function vetMix(o) {
         const d = JSON.parse(JSON.stringify(MIX0));
         for (const k in d) if (o && o[k]) (d[k].v = clamp(+o[k].v || 0, 0, 1.5)), (d[k].m = o[k].m === true);
@@ -1087,9 +1147,10 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         fx: vetFx(saved.fx),
         slots: vetSlots(saved.slots),
         mix: vetMix(saved.mix),
+        loop: { bpm: clamp(Math.round(+saved.loop?.bpm) || 100, 40, 240), bars: [1, 2, 4, 8].includes(+saved.loop?.bars) ? +saved.loop.bars : 2, click: saved.loop?.click !== false, trLoop: saved.loop?.trLoop === true },
         view: "pedal",
       };
-      const save = () => store("play.state", { sel: S.sel, fx: S.fx, slots: S.slots, mix: S.mix });
+      const save = () => store("play.state", { sel: S.sel, fx: S.fx, slots: S.slots, mix: S.mix, loop: S.loop });
       const cur = () => ofKind(S.kind)[S.sel[S.kind]];
 
       // ======================================================================
@@ -1230,7 +1291,22 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
           return true;
         }
       }
-      registerProcessor("pp-room", Room);`;
+      registerProcessor("pp-room", Room);
+      // the looper's recorder: blocks of the board's output, each stamped with the audio clock, so a loop is cut exactly on the bar
+      class Cap extends AudioWorkletProcessor {
+        constructor() { super(); this.b = new Float32Array(2048); this.n = 0; this.t = 0; }
+        process(ins) {
+          const x = ins[0] && ins[0][0];
+          if (x) {
+            if (!this.n) this.t = currentTime;
+            this.b.set(x, this.n);
+            this.n += x.length;
+            if (this.n >= 1920) { this.port.postMessage({ t: this.t, d: this.b.slice(0, this.n) }); this.n = 0; }
+          }
+          return true;
+        }
+      }
+      registerProcessor("pp-cap", Cap);`;
       async function loadWorklets(ctx) {
         if (!ctx.audioWorklet) return false;
         const url = URL.createObjectURL(new Blob([WORKLET_JS], { type: "text/javascript" }));
@@ -1310,7 +1386,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
             prev.connect(N.u[id].in);
             prev = N.u[id].out;
           }
-        prev.connect(N.master);
+        prev.connect(N.boardOut);
       }
       function buildEngine(ctx, wl) {
         const h = helpers(ctx, wl),
@@ -1320,8 +1396,21 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         N.chG = h.g(); // GUITAR fader
         N.chR = h.g(); // RIFF fader
         N.master = h.g();
+        N.boardOut = h.g();
+        N.chT = h.g(); // TRACKS fader
+        N.chL = h.g(); // LOOPS fader
+        N.chC = h.g(); // CLICK fader
         N.chG.connect(N.rig);
         N.chR.connect(N.rig);
+        // the guitar and the riff go through the board; tracks, loops and the click go straight to the master
+        for (const n of [N.boardOut, N.chT, N.chL, N.chC]) n.connect(N.master);
+        if (wl) {
+          // the looper records the board's output (the guitar with its pedals), not the tracks or the loops
+          N.cap = new AudioWorkletNode(ctx, "pp-cap", { channelCount: 1, channelCountMode: "explicit" });
+          const mute = h.g(0);
+          h.chain(N.boardOut, N.cap, mute, ctx.destination); // connected to the output so the browser keeps running it
+          N.cap.port.onmessage = (e) => lpKeep(e.data.t, e.data.d);
+        }
         // a soft limiter before the output (a curve, not a compressor: no look-ahead delay), so a hot rig never hard-clips
         const half = h.g(0.5),
           safe = ctx.createWaveShaper();
@@ -1331,7 +1420,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         N.limit = safe;
         // a meter on each mixer strip
         N.meters = {};
-        for (const [k, node] of [["gtr", N.chG], ["riff", N.chR], ["master", N.master]]) {
+        for (const [k, node] of [["gtr", N.chG], ["riff", N.chR], ["trk", N.chT], ["loop", N.chL], ["click", N.chC], ["master", N.master]]) {
           const m = ctx.createAnalyser();
           m.fftSize = 512;
           node.connect(m);
@@ -1346,6 +1435,9 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         if (!A.nodes) return;
         ramp(A.nodes.chG.gain, faderGain("gtr"));
         ramp(A.nodes.chR.gain, faderGain("riff"));
+        ramp(A.nodes.chT.gain, faderGain("trk"));
+        ramp(A.nodes.chL.gain, faderGain("loop"));
+        ramp(A.nodes.chC.gain, faderGain("click"));
         ramp(A.nodes.master.gain, faderGain("master"));
       }
       // iPhone and iPad: every browser there uses Apple's engine, which only hears the built-in mic and is too slow to play through
@@ -1490,6 +1582,12 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
       function engineStop() {
         ltStop();
         riffStop();
+        // loops and tracks keep their audio, but their players belong to the engine that is closing
+        LP.rec = null;
+        LP.loops.forEach((L) => L && ((L.on = false), (L.src = null)));
+        clkStop();
+        TR.src = null;
+        TR.cur = -1;
         if (A.el) {
           A.el.pause();
           A.el.srcObject = null;
@@ -1503,6 +1601,8 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         $("#lvl i").style.width = "0";
         statsFace();
         mixMeters();
+        lpFace();
+        trFace();
       }
       const peakOf = (an) => {
         const d = new Float32Array(an.fftSize);
@@ -1518,6 +1618,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         $("#lvl i").style.width = Math.min(100, Math.sqrt(pk) * 100) + "%";
         $("#lvl").classList.toggle("clip", pk >= 0.98);
         if (S.view === "mix") mixMeters();
+        if (S.view === "loop") lpFrame();
         A.raf = requestAnimationFrame(meterLoop);
       }
       $("#listen").onclick = () => (A.mic ? (engineStop(), toast("Stopped listening")) : listenStart());
@@ -1722,6 +1823,8 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         }
         if (v === "board") boardFace();
         if (v === "mix") mixFace();
+        if (v === "loop") lpFace();
+        if (v === "tracks") trFace();
         $$("main > section").forEach((s) => s.classList.toggle("show", s.id === (KINDS[v] ? "rig" : v)));
         $$("#vTabs [data-v], header [data-v]").forEach((b) => b.classList.toggle("on", b.dataset.v === v));
       }
@@ -2074,7 +2177,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
       // ======================================================================
       // MIXER: a fader and a mute for each source, and the master
       // ======================================================================
-      const MIXCH = [["gtr", "GUITAR"], ["riff", "TEST RIFF"], ["master", "MASTER"]];
+      const MIXCH = [["gtr", "GUITAR"], ["riff", "TEST RIFF"], ["trk", "TRACKS"], ["loop", "LOOPS"], ["click", "CLICK"], ["master", "MASTER"]];
       const dbTxt = (v) => (v <= 0.001 ? "-∞" : db(20 * Math.log10(v)));
       function mixFace() {
         $("#mixer").innerHTML = MIXCH.map(
@@ -2108,6 +2211,442 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         save();
         toast(MIXCH.find((x) => x[0] === k)[1] + (m ? " muted" : " on"));
       });
+
+      // ======================================================================
+      // LOOPER (the core of TUNE.Pocket's): one clock in 4/4 bars and 16 pads. Tap an empty pad: a bar of count-in
+      // clicks, then it records BARS bars of the board's output (your guitar through the pedals); tap a loop to play or
+      // stop it on the next bar. Every loop remembers the bar it was recorded on, so loops stay in step whenever they
+      // start. The recording is cut late by your measured delay (LATENCY TEST) so what you played on the click lands on
+      // the beat.
+      // shortcut: none of TUNE's loop effects, quantize, crop, nudge, reverse or undo, and loops are lost on reload; port them when asked.
+      // ======================================================================
+      const LP = { loops: Array(16).fill(null), sel: -1, rec: null, chunks: [] };
+      const CLK = { on: false, t0: 0, n: 0, timer: 0 };
+      const mod = (a, b) => ((a % b) + b) % b;
+      const beatDur = () => 60 / S.loop.bpm;
+      const barDur = () => beatDur() * 4;
+      const nextBar = (t) => CLK.t0 + Math.ceil((t - CLK.t0) / barDur() - 1e-9) * barDur();
+      const lpAny = () => LP.loops.some((L) => L && L.on);
+      // how late your playing reaches the recording: the latency test's result, or the browser's own estimate
+      // shortcut: the test riff has no round trip, so a riff recorded into a loop lands that much early; fine for a test sound.
+      const lpLat = () => (LAT ? LAT.ms / 1000 : (A.ctx.outputLatency || 0) + 2 * (A.ctx.baseLatency || 0) + 0.01);
+      // the recorder keeps the last 40 s of the board's output
+      function lpKeep(t, d) {
+        LP.chunks.push({ t, d });
+        while (LP.chunks.length && LP.chunks[0].t < t - 40) LP.chunks.shift();
+      }
+      // start the clock: song time `song` falls at audio time `when`
+      function clkStart(when, song = 0) {
+        CLK.t0 = when - song;
+        CLK.n = Math.ceil((when - CLK.t0) / beatDur() - 1e-6);
+        if (!CLK.on) {
+          CLK.on = true;
+          CLK.timer = setInterval(clkTick, 25);
+        }
+        clkTick();
+      }
+      function clkStop() {
+        CLK.on = false;
+        clearInterval(CLK.timer);
+      }
+      const clkMaybeStop = () => !lpAny() && !LP.rec && clkStop();
+      // clicks are scheduled a little ahead on the audio clock; the count-in clicks even with CLICK off
+      function clkTick() {
+        if (!A.ctx) return clkStop();
+        const now = A.ctx.currentTime,
+          r = LP.rec;
+        for (;;) {
+          const t = CLK.t0 + CLK.n * beatDur();
+          if (t > now + 0.15) break;
+          if (t > now - 0.02 && (S.loop.click || (r && t < r.start - 0.001))) clickAt(t, mod(CLK.n, 4) === 0);
+          CLK.n++;
+        }
+        if (r && now > r.end + lpLat() + 0.2) lpRecDone();
+      }
+      function clickAt(t, down) {
+        const c = A.ctx,
+          o = c.createOscillator(),
+          g = c.createGain();
+        o.frequency.value = down ? 1500 : 1000;
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(down ? 0.35 : 0.2, t + 0.002);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+        o.connect(g).connect(A.nodes.chC);
+        o.start(t);
+        o.stop(t + 0.05);
+      }
+      // where in the loop the song is at audio time t
+      const lpOffset = (L, t) => mod(t - CLK.t0 - L.a * barDur(), L.buf.duration);
+      function lpHalt(L, when) {
+        if (!L.src) return;
+        L.src.env.gain.setTargetAtTime(0, when, 0.004);
+        try {
+          L.src.node.stop(when + 0.05);
+        } catch {}
+        L.src = null;
+      }
+      function lpStartAt(L, when) {
+        const c = A.ctx;
+        lpHalt(L, when);
+        const node = c.createBufferSource(),
+          env = c.createGain();
+        node.buffer = L.buf;
+        node.loop = true;
+        env.gain.setValueAtTime(0, when);
+        env.gain.linearRampToValueAtTime(1, when + 0.008); // a short fade in, so starting mid-loop does not click
+        node.connect(env).connect(A.nodes.chL);
+        node.start(when, lpOffset(L, when));
+        Object.assign(L, { src: { node, env }, on: true, at: when });
+      }
+      function lpStop(L) {
+        L.on = false;
+        if (A.ctx) lpHalt(L, A.ctx.currentTime + 0.005);
+      }
+      // play a stopped loop: on the next bar if something is playing, at once (from its start) if not
+      function lpPlay(L) {
+        const now = A.ctx.currentTime;
+        if (!CLK.on) {
+          clkStart(now + 0.05, L.a * barDur());
+          lpStartAt(L, now + 0.05);
+        } else lpStartAt(L, nextBar(now + 0.03));
+      }
+      async function lpRecord(i, overdub) {
+        if (LP.rec) return toast("Already recording: tap the red pad to cancel");
+        if (!A.mic) await listenStart(); // recording needs the input
+        if (!A.mic) return;
+        if (!A.nodes.cap) return toast("This browser cannot record loops (no AudioWorklet)", 2600);
+        const c = A.ctx,
+          L = overdub ? LP.loops[i] : null,
+          now = c.currentTime;
+        if (L && L.buf.sampleRate !== c.sampleRate) return toast("That loop was recorded at another sample rate: record a new one", 2600);
+        let start;
+        if (!CLK.on) {
+          // a bar of count-in, then the loop starts on a downbeat (an overdub, on its own first bar)
+          clkStart(now + 0.08, (L ? L.a * barDur() : 0) - barDur());
+          start = now + 0.08 + barDur();
+          if (L) lpStartAt(L, start);
+        } else if (L) {
+          // an overdub starts on the loop's next turn
+          if (!L.on) lpStartAt(L, nextBar(now + 0.03));
+          const from = Math.max(now + beatDur(), L.at);
+          start = from + mod(-lpOffset(L, from), L.buf.duration);
+        } else {
+          start = nextBar(now + 0.05);
+          if (start - now < beatDur() * 0.9) start += barDur();
+        }
+        const len = L ? L.buf.duration : S.loop.bars * barDur();
+        LP.rec = { i, start, end: start + len, n: L ? L.buf.length : Math.round(len * c.sampleRate), a: L ? L.a : Math.round((start - CLK.t0) / barDur()), overdub: !!L };
+        LP.sel = i;
+        lpFace();
+        toast(L ? "Overdub: play on the loop's next turn" : "Count-in: one bar of clicks, then play", 2400);
+      }
+      // the recorded samples from audio time `from`, n of them
+      function lpCut(from, n) {
+        const sr = A.ctx.sampleRate,
+          out = new Float32Array(n);
+        let got = 0;
+        for (const { t, d } of LP.chunks) {
+          const i0 = Math.round((t - from) * sr);
+          if (i0 >= n || i0 + d.length <= 0) continue;
+          for (let k = Math.max(0, -i0), e = Math.min(d.length, n - i0); k < e; k++) out[i0 + k] = d[k];
+          got += Math.min(d.length, n - i0) - Math.max(0, -i0);
+        }
+        return got > n * 0.6 ? out : null;
+      }
+      function lpRecDone() {
+        const r = LP.rec,
+          c = A.ctx;
+        LP.rec = null;
+        const d = lpCut(r.start + lpLat(), r.n);
+        if (!d) {
+          toast("Nothing was recorded: check the input");
+          clkMaybeStop();
+          return lpFace();
+        }
+        // a few milliseconds of fade at both ends, so the loop point does not click
+        const fd = Math.min(d.length >> 2, Math.round(c.sampleRate * 0.004));
+        for (let k = 0; k < fd; k++) {
+          d[k] *= k / fd;
+          d[d.length - 1 - k] *= k / fd;
+        }
+        let L = LP.loops[r.i];
+        if (r.overdub && L) {
+          const old = L.buf.getChannelData(0);
+          let pk = 0;
+          for (let k = 0; k < d.length; k++) pk = Math.max(pk, Math.abs((d[k] += old[k] || 0)));
+          if (pk > 0.98) for (let k = 0; k < d.length; k++) d[k] *= 0.98 / pk; // the layers together never clip
+        }
+        const buf = c.createBuffer(1, d.length, c.sampleRate);
+        buf.copyToChannel(d, 0);
+        if (r.overdub && L) L.buf = buf;
+        else L = LP.loops[r.i] = { buf, a: r.a, on: false, src: null };
+        lpStartAt(L, c.currentTime + 0.02);
+        toast(r.overdub ? "Layer added" : "Loop recorded");
+        lpFace();
+      }
+      async function lpPad(i) {
+        if (LP.rec?.i === i) {
+          LP.rec = null;
+          clkMaybeStop();
+          lpFace();
+          return toast("Recording cancelled");
+        }
+        const L = LP.loops[i];
+        LP.sel = i;
+        if (!L) return lpRecord(i, false);
+        await engineEnsure();
+        if (L.on) lpStop(L);
+        else lpPlay(L);
+        clkMaybeStop();
+        lpFace();
+      }
+      const lpBars = (L) => {
+        const n = Math.max(1, Math.round(L.buf.duration / barDur()));
+        return n + (n > 1 ? " BARS" : " BAR");
+      };
+      function lpFace() {
+        if (!$("#lBpm").options.length) {
+          let o = "";
+          for (let b = 40; b <= 240; b += 5) o += `<option value="${b}">${b} BPM</option>`;
+          $("#lBpm").innerHTML = o;
+        }
+        $("#lBpm").value = S.loop.bpm - (S.loop.bpm % 5);
+        $("#lBars").value = S.loop.bars;
+        $("#lClick").innerHTML = `<i>METRONOME</i>CLICK ${S.loop.click ? "ON" : "OFF"}`;
+        $("#lClick").classList.toggle("on", S.loop.click);
+        $("#lPads").innerHTML = LP.loops
+          .map((L, i) => {
+            const r = LP.rec?.i === i,
+              cls = r ? "rec" : L ? (L.on ? "on" : "has") : "empty",
+              txt = r ? (LP.rec.overdub ? "OVERDUB" : "REC") : L ? lpBars(L) : "+ REC";
+            const tip = r ? "Recording: tap to cancel" : L ? `Loop ${i + 1}, ${lpBars(L)}: tap to ${L.on ? "stop" : "play"} it` : `Pad ${i + 1}: tap to record a loop`;
+            return `<button class="pad ${cls}${LP.sel === i && L ? " sel" : ""}" data-i="${i}" title="${tip}" aria-label="${tip}"><b>${i + 1}</b><span>${txt}</span><i></i></button>`;
+          })
+          .join("");
+        const sel = LP.loops[LP.sel];
+        $("#lOver").disabled = $("#lClr").disabled = !sel;
+        $("#lAll").innerHTML = lpAny() ? "<i>LOOPS</i>STOP ALL" : "<i>LOOPS</i>PLAY ALL";
+      }
+      // every frame while the looper shows: how far each loop has played, and the count-in
+      function lpFrame() {
+        if (!A.ctx) return;
+        const t = A.ctx.currentTime - (A.ctx.outputLatency || 0) - (A.ctx.baseLatency || 0),
+          r = LP.rec;
+        $$("#lPads .pad").forEach((el) => {
+          const i = +el.dataset.i,
+            L = LP.loops[i];
+          let f = 0;
+          if (r && r.i === i) {
+            f = t < r.start ? 0 : (t - r.start) / (r.end - r.start);
+            const sp = el.querySelector("span"),
+              left = Math.ceil((r.start - t) / beatDur());
+            sp.textContent = t < r.start ? "IN " + Math.max(1, left) : r.overdub ? "OVERDUB" : "REC";
+          } else if (L?.on && t >= L.at) f = lpOffset(L, t) / L.buf.duration;
+          el.querySelector("i").style.width = Math.min(100, f * 100) + "%";
+        });
+      }
+      $("#lPads").addEventListener("click", (e) => {
+        const b = e.target.closest(".pad");
+        if (b) lpPad(+b.dataset.i);
+      });
+      $("#lAll").onclick = async () => {
+        if (lpAny()) {
+          LP.loops.forEach((L) => L?.on && lpStop(L));
+          toast("Loops stopped");
+        } else if (LP.loops.some(Boolean)) {
+          await engineEnsure();
+          const now = A.ctx.currentTime,
+            was = CLK.on;
+          if (!was) clkStart(now + 0.05, 0);
+          const at = was ? nextBar(now + 0.03) : now + 0.05;
+          LP.loops.forEach((L) => L && lpStartAt(L, at));
+          toast("Playing every loop");
+        } else toast("No loops yet: tap a pad to record one");
+        clkMaybeStop();
+        lpFace();
+      };
+      $("#lOver").onclick = () => lpRecord(LP.sel, true);
+      const lpClear = (i) => {
+        const L = LP.loops[i];
+        if (!L) return;
+        lpStop(L);
+        LP.loops[i] = null;
+      };
+      $("#lClr").onclick = () => {
+        lpClear(LP.sel);
+        clkMaybeStop();
+        lpFace();
+        toast("Loop " + (LP.sel + 1) + " cleared");
+      };
+      // CLEAR ALL asks twice: a second tap within 3 s
+      $("#lClrAll").onclick = (e) => {
+        const b = e.currentTarget;
+        if (!LP.loops.some(Boolean)) return toast("No loops to clear");
+        if (!b.classList.contains("sure")) {
+          b.classList.add("sure", "on");
+          setTimeout(() => b.classList.remove("sure", "on"), 3000);
+          return toast("Tap CLEAR ALL again to delete every loop");
+        }
+        b.classList.remove("sure", "on");
+        LP.loops.forEach((_, i) => lpClear(i));
+        LP.rec = null;
+        clkMaybeStop();
+        lpFace();
+        toast("Every loop cleared");
+      };
+      // a new tempo: loops recorded at another one keep their length, so everything stops and starts again on the new clock
+      $("#lBpm").onchange = (e) => {
+        S.loop.bpm = clamp(+e.target.value, 40, 240);
+        save();
+        LP.loops.forEach((L) => L?.on && lpStop(L));
+        LP.rec = null;
+        clkStop();
+        lpFace();
+        toast(S.loop.bpm + " BPM" + (LP.loops.some(Boolean) ? ": loops stopped" : ""));
+      };
+      $("#lBars").onchange = (e) => {
+        S.loop.bars = +e.target.value;
+        save();
+        toast("New loops: " + e.target.selectedOptions[0].text);
+      };
+      $("#lClick").onclick = () => {
+        S.loop.click = !S.loop.click;
+        save();
+        lpFace();
+        toast(S.loop.click ? "Click on" : "Click off (the count-in still clicks)");
+      };
+
+      // ======================================================================
+      // TRACKS: your own backing tracks, kept on this device in IndexedDB (never uploaded), played into the TRACKS fader
+      // ======================================================================
+      const TR = { list: [], cur: -1, src: null, bufs: {}, sure: -1 };
+      const MAX_TRACK = 80 * 1024 * 1024;
+      function idbDo(mode, fn) {
+        return new Promise((ok, no) => {
+          const rq = indexedDB.open("play-pocket", 1);
+          rq.onupgradeneeded = () => rq.result.createObjectStore("tracks", { keyPath: "id" });
+          rq.onerror = () => no(rq.error);
+          rq.onsuccess = () => {
+            const db = rq.result,
+              tx = db.transaction("tracks", mode),
+              r = fn(tx.objectStore("tracks"));
+            tx.oncomplete = () => (db.close(), ok(r.result));
+            tx.onerror = () => (db.close(), no(tx.error));
+          };
+        });
+      }
+      async function trLoad() {
+        try {
+          const all = await idbDo("readonly", (st) => st.getAll());
+          // stored data is untrusted too: keep only well-formed entries
+          TR.list = (all || []).filter((t) => t && typeof t.id === "string" && typeof t.name === "string" && t.blob instanceof Blob);
+        } catch {
+          TR.list = [];
+        }
+        trFace();
+      }
+      function trFace() {
+        $("#trList").innerHTML = TR.list.length
+          ? TR.list
+              .map(
+                (t, i) =>
+                  `<div class="trk"><button class="tp${TR.cur === i ? " on" : ""}" data-i="${i}" title="${TR.cur === i ? "Stop" : "Play"} ${esc(t.name)}">${TR.cur === i ? "■" : "▶"} ${esc(t.name)}</button><button class="td${TR.sure === i ? " sure" : ""}" data-del="${i}" title="Delete ${esc(t.name)} from this device" aria-label="Delete ${esc(t.name)}">${TR.sure === i ? "SURE?" : "✕"}</button></div>`,
+              )
+              .join("")
+          : `<div class="card hint">No tracks yet: ADD one from this device.</div>`;
+        $("#trLoop").innerHTML = `<i>AT THE END</i>${S.loop.trLoop ? "REPEAT ON" : "REPEAT OFF"}`;
+        $("#trLoop").classList.toggle("on", S.loop.trLoop);
+      }
+      function trStop() {
+        try {
+          TR.src?.stop();
+        } catch {}
+        TR.src = null;
+        TR.cur = -1;
+        trFace();
+      }
+      async function trPlay(i) {
+        if (TR.cur === i) return trStop(), toast("Track stopped");
+        trStop();
+        await engineEnsure();
+        const t = TR.list[i];
+        let buf = TR.bufs[t.id];
+        if (!buf)
+          try {
+            toast("Loading " + t.name + "…");
+            buf = TR.bufs[t.id] = await A.ctx.decodeAudioData(await t.blob.arrayBuffer());
+          } catch {
+            return toast("This browser cannot play that file", 2600);
+          }
+        if (!A.ctx) return;
+        const src = A.ctx.createBufferSource();
+        src.buffer = buf;
+        src.loop = S.loop.trLoop;
+        src.connect(A.nodes.chT);
+        src.onended = () => TR.src === src && trStop();
+        src.start();
+        Object.assign(TR, { src, cur: i });
+        trFace();
+        toast("Playing " + t.name);
+      }
+      $("#trList").addEventListener("click", async (e) => {
+        const p = e.target.closest("[data-i]"),
+          d = e.target.closest("[data-del]");
+        if (p) return trPlay(+p.dataset.i);
+        if (!d) return;
+        const i = +d.dataset.del;
+        // delete asks twice: the button turns into SURE? for 3 s
+        if (TR.sure !== i) {
+          TR.sure = i;
+          trFace();
+          setTimeout(() => TR.sure === i && ((TR.sure = -1), trFace()), 3000);
+          return;
+        }
+        const t = TR.list[i];
+        if (TR.cur === i) trStop();
+        else if (TR.cur > i) TR.cur--;
+        TR.sure = -1;
+        TR.list.splice(i, 1);
+        delete TR.bufs[t.id];
+        trFace();
+        try {
+          await idbDo("readwrite", (st) => st.delete(t.id));
+          toast(t.name + " deleted");
+        } catch {
+          toast("Could not delete it from this device", 2600);
+        }
+      });
+      $("#trAdd").onclick = () => $("#trFile").click();
+      $("#trFile").onchange = async (e) => {
+        const files = [...e.target.files];
+        e.target.value = "";
+        let n = 0;
+        for (const f of files) {
+          if (f.size > MAX_TRACK) {
+            toast(f.name + " is too big (80 MB at most)", 2600);
+            continue;
+          }
+          const t = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8), name: f.name.slice(0, 120), size: f.size, blob: f };
+          try {
+            await idbDo("readwrite", (st) => st.put(t));
+          } catch {
+            toast("No room on this device for " + f.name, 2600);
+            continue;
+          }
+          TR.list.push(t);
+          n++;
+        }
+        trFace();
+        if (n) toast(n + (n > 1 ? " tracks added" : " track added"));
+      };
+      $("#trLoop").onclick = () => {
+        S.loop.trLoop = !S.loop.trLoop;
+        save();
+        if (TR.src) TR.src.loop = S.loop.trLoop;
+        trFace();
+        toast(S.loop.trLoop ? "Tracks repeat" : "Tracks play once");
+      };
+      $("#trStop").onclick = () => (TR.src ? (trStop(), toast("Track stopped")) : toast("No track playing"));
 
       // ======================================================================
       // LATENCY TEST: a ball bounces wall to wall; each time it crosses the middle a click sounds and you pick a string.
@@ -2306,16 +2845,62 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
           },
         },
         {
+          id: "loop",
+          t: { en: "LOOPER", es: "LOOPER" },
+          b: {
+            en: [
+              "The loop icon at the top opens the **LOOPER**: record your playing, through the board, in loops that stay in time.",
+              "- Set the **tempo** (BPM) and how long a new loop is (**BARS**) first.",
+              "- Tap an **empty pad**: it starts listening if it was not, clicks one bar to count you in (the pad shows IN 4, 3, 2, 1), then records. When the loop ends it plays straight away.",
+              "- Tap a **loop** to stop or play it; it comes in on the next bar, in step with the others. Tap a red pad to cancel a recording.",
+              "- **OVERDUB** records another layer on top of the chosen loop, on its next turn. **CLEAR** deletes the chosen loop; **CLEAR ALL** (tap twice) deletes them all. **PLAY ALL** starts or stops every loop.",
+              "- **CLICK** turns the metronome on or off while loops play; the count-in always clicks. The click, the loops and the tracks are not recorded: only your board is.",
+              "- Recordings are lined up with your **LATENCY TEST** result (OPTIONS), so run it once: what you play on the click lands on the beat.",
+              "- Changing the tempo stops the loops. Loops are lost when the app is closed. Effects, quantize and editing (as in TUNE.Pocket) come later.",
+            ],
+            es: [
+              "El icono de bucle de arriba abre el **LOOPER**: graba lo que tocas, a través del board, en loops que van a tempo.",
+              "- Primero elige el **tempo** (BPM) y cuánto dura un loop nuevo (**BARS**, compases).",
+              "- Toca un **pad vacío**: empieza a escuchar si no lo hacía, marca un compás de cuenta (el pad muestra IN 4, 3, 2, 1) y graba. Cuando el loop acaba, suena enseguida.",
+              "- Toca un **loop** para pararlo o tocarlo; entra en el siguiente compás, a tempo con los demás. Toca un pad rojo para cancelar una grabación.",
+              "- **OVERDUB** graba otra capa encima del loop elegido, en su siguiente vuelta. **CLEAR** borra el loop elegido; **CLEAR ALL** (dos toques) los borra todos. **PLAY ALL** arranca o para todos.",
+              "- **CLICK** enciende o apaga el metrónomo mientras suenan los loops; la cuenta siempre suena. El clic, los loops y las pistas no se graban: solo tu board.",
+              "- Las grabaciones se alinean con tu resultado de la **LATENCY TEST** (OPTIONS), así que hazla una vez: lo que tocas con el clic cae en el pulso.",
+              "- Cambiar el tempo para los loops. Los loops se pierden al cerrar la app. Los efectos, la cuantización y la edición (como en TUNE.Pocket) llegarán más adelante.",
+            ],
+          },
+        },
+        {
+          id: "tracks",
+          t: { en: "TRACKS", es: "TRACKS" },
+          b: {
+            en: [
+              "The note icon at the top opens **TRACKS**: your own backing tracks or songs to play along with.",
+              "- **ADD** picks audio files from this device (MP3, WAV, OGG, M4A and whatever else the browser can play, up to 80 MB each). They are kept on this device and never uploaded.",
+              "- Tap a track to play it, again to stop it. **REPEAT** plays it again when it ends. **STOP** stops it.",
+              "- **✕** deletes a track from this device: tap it, then **SURE?**.",
+              "- Tracks go to the **TRACKS** fader in the MIXER, not through the board, and are not recorded by the looper.",
+            ],
+            es: [
+              "El icono de nota de arriba abre **TRACKS**: tus propias pistas de acompañamiento o canciones para tocar encima.",
+              "- **ADD** elige archivos de audio de este dispositivo (MP3, WAV, OGG, M4A y lo que el navegador pueda reproducir, hasta 80 MB cada uno). Se guardan en este dispositivo y nunca se suben.",
+              "- Toca una pista para reproducirla, otra vez para pararla. **REPEAT** la repite al acabar. **STOP** la para.",
+              "- **✕** borra una pista de este dispositivo: tócalo y después **SURE?**.",
+              "- Las pistas van al fader **TRACKS** del MIXER, no pasan por el board, y el looper no las graba.",
+            ],
+          },
+        },
+        {
           id: "mix",
           t: { en: "MIXER", es: "MIXER" },
           b: {
             en: [
-              "The faders icon at the top (or the speaker on the board) opens the **MIXER**: one strip for the **GUITAR** (your input), one for the **TEST RIFF** and the **MASTER**, which sets what reaches your headphones.",
+              "The faders icon at the top (or the speaker on the board) opens the **MIXER**: a strip for the **GUITAR** (your input), the **TEST RIFF**, the **TRACKS**, the **LOOPS** and the **CLICK**, and the **MASTER**, which sets what reaches your headphones.",
               "- Slide a fader to set its volume (0 dB is unchanged); **M** mutes it. The bar under each one shows its level while sound plays.",
               "- A soft limiter after the master keeps a loud board from clipping harshly.",
             ],
             es: [
-              "El icono de faders de arriba (o el altavoz del board) abre el **MIXER**: una tira para la **GUITAR** (tu entrada), otra para el **TEST RIFF** y el **MASTER**, que decide lo que llega a tus auriculares.",
+              "El icono de faders de arriba (o el altavoz del board) abre el **MIXER**: una tira para la **GUITAR** (tu entrada), el **TEST RIFF**, las **TRACKS**, los **LOOPS** y el **CLICK**, y el **MASTER**, que decide lo que llega a tus auriculares.",
               "- Desliza un fader para su volumen (0 dB es sin cambio); **M** lo silencia. La barra de debajo muestra su nivel mientras suena.",
               "- Un limitador suave después del master evita que un board muy fuerte sature de forma áspera.",
             ],
@@ -2326,18 +2911,18 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
           t: { en: "RECORD: listening", es: "RECORD: escuchar" },
           b: {
             en: [
-              "**RECORD** (the microphone, bottom left) starts listening: your instrument goes through the rig to your headphones. Tap it again to stop. Recording loops comes later.",
+              "**RECORD** (the microphone, bottom left) starts listening: your instrument goes through the rig to your headphones. Tap it again to stop (that also stops the loops and tracks). To record loops, use the LOOPER.",
               "- Plug the guitar into an audio interface, or a guitar cable for phones, and choose it in **OPTIONS** (Files tab).",
               "- **Use headphones** or the interface's output: with the phone's own microphone and speaker the sound feeds back.",
-              "- The bar next to the logo shows the input level; it turns red when it clips. Set the level with **GAIN** in OPTIONS.",
+              "- The thin bar under the top icons shows the input level; it turns red when it clips. Set the level with **GAIN** in OPTIONS.",
               "- Best: Chrome or Firefox on a computer, Firefox on Android (about 20 to 30 ms). Chrome on Android is too slow to play through, and iPhone and iPad browsers only hear the built-in microphone (an Apple bug).",
               "- The app stops listening when it goes to the background.",
             ],
             es: [
-              "**RECORD** (el micrófono, abajo a la izquierda) empieza a escuchar: tu instrumento pasa por el equipo hasta tus auriculares. Tócalo otra vez para parar. Grabar loops llegará más adelante.",
+              "**RECORD** (el micrófono, abajo a la izquierda) empieza a escuchar: tu instrumento pasa por el equipo hasta tus auriculares. Tócalo otra vez para parar (también para los loops y las pistas). Para grabar loops, usa el LOOPER.",
               "- Conecta la guitarra a una interfaz de audio, o a un cable de guitarra para móvil, y elígela en **OPTIONS** (pestaña Archivos).",
               "- **Usa auriculares** o la salida de la interfaz: con el micrófono y el altavoz del móvil el sonido se acopla.",
-              "- La barra junto al logo muestra el nivel de entrada; se pone roja cuando satura. Ajusta el nivel con **GAIN** en OPTIONS.",
+              "- La barra fina bajo los iconos de arriba muestra el nivel de entrada; se pone roja cuando satura. Ajusta el nivel con **GAIN** en OPTIONS.",
               "- Lo mejor: Chrome o Firefox en un ordenador, Firefox en Android (unos 20 a 30 ms). Chrome en Android es demasiado lento para tocar, y los navegadores de iPhone y iPad solo oyen el micrófono interno (un fallo de Apple).",
               "- La app deja de escuchar cuando pasa a segundo plano.",
             ],
@@ -2368,14 +2953,14 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
           t: { en: "Files", es: "Archivos" },
           b: {
             en: [
-              "The disk at the top right opens the Files tab; tap it again to go back.",
+              "The icons at the top open BOARD, LOOPER, TRACKS, MIXER and, with the disk, the Files tab; tap the open one again to go back to the pedals.",
               "- **FILES**: EXPORT BOARD saves the board's order and every pedal's, amp's and cab's knobs and switches in a .json file; IMPORT BOARD loads one; RESET BOARD puts everything back.",
               "- **THEME**: the look, shared with TRACK, TUNE and SING.Pocket.",
               "- **OPTIONS**: see Options, stats and the latency test.",
               "- **HELP**: this manual. The **PLAY.** logo opens it too.",
             ],
             es: [
-              "El disco arriba a la derecha abre la pestaña Archivos; tócalo otra vez para volver.",
+              "Los iconos de arriba abren BOARD, LOOPER, TRACKS, MIXER y, con el disco, la pestaña Archivos; toca otra vez el que está abierto para volver a los pedales.",
               "- **FILES**: EXPORT BOARD guarda el orden del board y los ajustes de todos los pedales, amplificadores y pantallas en un archivo .json; IMPORT BOARD lo carga; RESET BOARD lo devuelve todo al principio.",
               "- **THEME**: el aspecto, compartido con TRACK, TUNE y SING.Pocket.",
               "- **OPTIONS**: mira Opciones, datos y prueba de retraso.",
@@ -2420,7 +3005,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         $("#hBody").scrollTop = el ? el.offsetTop - 8 : 0;
       }
       const closeHelp = () => ($("#help").hidden = true);
-      $("#logo").onclick = () => openHelp({ files: "files", amp: "amp", cab: "amp", board: "board", mix: "mix" }[S.view]);
+      $("#logo").onclick = () => openHelp({ files: "files", amp: "amp", cab: "amp", board: "board", mix: "mix", loop: "loop", tracks: "tracks" }[S.view]);
       $("#helpBtn").onclick = () => openHelp(fpOpen === "opts" ? "opts" : "files");
       $("#hClose").onclick = closeHelp;
       $("#help").addEventListener("click", (e) => {
@@ -2459,6 +3044,8 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
       renderUnit();
       boardFace();
       mixFace();
+      lpFace();
+      trLoad();
     </script>
   </body>
 </html>

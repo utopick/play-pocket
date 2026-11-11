@@ -1,8 +1,8 @@
 # PLAY.Pocket
 
-A pocket guitar rig in one HTML file: plug a guitar into an audio interface or a USB guitar cable, and play it through pedals, amps and cabs laid out on a board, in the browser. The sister app of [TRACK.Pocket](https://github.com/utopick/track-pocket), [TUNE.Pocket](https://github.com/utopick/tune-pocket) and [SING.Pocket](https://github.com/utopick/sing-pocket): no install, no dependencies, no network requests.
+A pocket guitar rig in one HTML file: plug a guitar into an audio interface or a USB guitar cable, and play it through pedals, amps and cabs laid out on a board, over your own backing tracks and loops, in the browser. The sister app of [TRACK.Pocket](https://github.com/utopick/track-pocket), [TUNE.Pocket](https://github.com/utopick/tune-pocket) and [SING.Pocket](https://github.com/utopick/sing-pocket): no install, no dependencies, no network requests.
 
-**Status: prototype.** Not released yet. It has 16 pedals, 4 amps and 4 cabs (where each comes from: [docs/UNITS.md](docs/UNITS.md)), a board to order them, a synthesized test riff, a mixer, a latency test and the usual Files tab (board export and import, themes, options, help in English and Spanish). Next: backing tracks, a looper that uses the measured latency, and install as an app.
+**Status: prototype.** Not released yet. It has 16 pedals, 4 amps and 4 cabs (where each comes from: [docs/UNITS.md](docs/UNITS.md)), a board to order them, a synthesized test riff, a looper (the core of TUNE's, lined up with the measured latency), backing tracks from your device, a mixer, a latency test and the usual Files tab (board export and import, themes, options, help in English and Spanish). Next: the rest of TUNE's looper (effects, quantize, editing, keeping loops), and install as an app.
 
 ## How to run it
 
@@ -12,8 +12,10 @@ Serve the folder from `localhost` or HTTPS (the browser only gives the microphon
 
 - **PEDALS, AMPS, CABS** (the bottom bar) show one unit at a time; **◁ ▷** or a swipe changes it. Drag a knob up or down; the switch turns the unit on.
 - **BOARD** (the squares icon at the top): the signal enters at the top right and snakes square by square to the speaker at the bottom right. Tap an empty square to add a unit, tap a unit twice to edit it, drag it to move it. **RIFF ▶** plays a test riff through the board.
-- **MIXER** (the faders icon, or the speaker square): guitar, test riff and master volumes, mutes and meters.
-- **RECORD** starts listening. The bar next to the logo is the input level.
+- **MIXER** (the faders icon, or the speaker square): guitar, test riff, tracks, loops, click and master volumes, mutes and meters.
+- **LOOPER** (the loop icon): tempo, loop length and click; tap an empty pad to count in and record your board, tap a loop to play or stop it on the bar; OVERDUB, CLEAR.
+- **TRACKS** (the note icon): add audio files from the device (kept in the browser, never uploaded) and play along.
+- **RECORD** starts listening. The thin bar under the top icons is the input level.
 - **The disk** (top right) opens Files: **FILES** (export, import, reset the board), **THEME**, **OPTIONS** and **HELP**.
 - **OPTIONS** has the stats the browser reports, the **LATENCY TEST** (a ball bounces; pick a string on each click; or plug a cable from the output into the input and let it measure itself), the input, channel, gain and output, and the engine switches (sample rate, buffer, oversampling, raw input).
 
