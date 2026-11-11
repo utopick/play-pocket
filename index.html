@@ -14,6 +14,7 @@
   Storage
     localStorage  play.state   { sel: { pedal, amp, cab: index shown }, fx: { <unit id>: { on, <knob id>: value } } }
                   play.audioIn { dev, ch: mix | L | R, gains: { <device id or "default">: dB } }
+                  play.audioOut { dev: output device id ("" = system default), label }
                   play.opts    { rate: input | browser | 44100 | 48000, hint: interactive | 0.005 | balanced | playback,
                                  os: none | 2x | 4x, raw: bool }
                   play.lat     the last latency test { ms, spread, n, at, rate }
@@ -496,13 +497,14 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
           <div id="stats"></div>
           <div class="row"><button id="ltOpen" style="flex: 1" class="on" title="Measure your real delay: pick a string when the ball crosses the middle">LATENCY TEST</button></div>
           <div class="hint">Numbers from the browser while listening. The output figures are the browser's own estimate; LATENCY TEST measures the whole trip (sound out, your pick, sound in).</div>
-          <h3>Audio input</h3>
+          <h3>Audio input and output</h3>
           <div class="row"><select id="ainDev" title="Which input your instrument comes in on"></select></div>
           <div class="row">
             <select id="ainCh" title="Which channel of the input to use"><option value="mix">Both channels</option><option value="L">Input 1 (left)</option><option value="R">Input 2 (right)</option></select>
           </div>
           <div class="row"><span>GAIN</span><input id="ainGain" type="range" min="-12" max="24" step="0.5" value="0" title="Boost or cut the input before the rig. Kept per input; adds no delay." /><b id="ainGainV">0 dB</b></div>
-          <div class="hint">Use headphones or an interface: with the phone's own mic and speaker the sound feeds back.</div>
+          <div class="row"><select id="aoutDev" title="Where the sound comes out"></select></div>
+          <div class="hint">Use headphones or an interface: with the phone's own mic and speaker the sound feeds back. Choosing an output works best in Chrome; Firefox plays it through its media player, which adds delay (for the lowest delay pick the output in the system settings).</div>
           <h3>Engine</h3>
           <div class="row">
             <select id="oRate" title="The sample rate the app runs at"><option value="input">Rate: same as the input (no resampling)</option><option value="browser">Rate: browser default</option><option value="44100">Rate: 44100 Hz</option><option value="48000">Rate: 48000 Hz</option></select>
@@ -648,6 +650,10 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
       if (typeof AIN.dev !== "string") AIN.dev = "";
       if (!["mix", "L", "R"].includes(AIN.ch)) AIN.ch = "mix";
       if (!AIN.gains || typeof AIN.gains !== "object" || Array.isArray(AIN.gains)) AIN.gains = {};
+      const AOUT = Object.assign({ dev: "", label: "" }, load("play.audioOut") || {});
+      if (typeof AOUT.dev !== "string") AOUT.dev = "";
+      if (typeof AOUT.label !== "string") AOUT.label = "";
+      const aoutSave = () => store("play.audioOut", { dev: AOUT.dev, label: AOUT.label });
       const ainSave = () => store("play.audioIn", { dev: AIN.dev, ch: AIN.ch, gains: AIN.gains });
       const ainDb = () => {
         const v = +AIN.gains[AIN.dev || "default"];
@@ -771,7 +777,9 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         const half = g(0.5),
           safe = ctx.createWaveShaper();
         safe.curve = curveOf((x) => Math.tanh(2 * x));
-        prev.connect(half).connect(safe).connect(ctx.destination);
+        prev.connect(half).connect(safe);
+        N.post = half; // the output stage's entry: the latency test's clicks go here too, so they reach the same output
+        N.limit = safe;
         return N;
       }
       // puts the state of one unit (or all) into the running graph
@@ -885,6 +893,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
           gain.connect(meter);
           Object.assign(A, { ctx, stream, gain, meter, track: tr, nodes: buildChain(ctx, gain), onset: null });
           applyFx();
+          await outRoute();
           if (ctx.audioWorklet) {
             const url = URL.createObjectURL(new Blob([ONSET_JS], { type: "text/javascript" }));
             try {
@@ -916,8 +925,56 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
           toast(e.name === "NotAllowedError" ? "Allow the microphone in the browser to play through the rig" : "Could not open the input: " + e.message, 3200);
         }
       }
+      // the output: Chrome can send the engine itself to any output (no extra delay). Firefox cannot: there the sound goes
+      // through a media player that can (it adds delay), or stays on the system default.
+      async function outRoute() {
+        const c = A.ctx,
+          out = A.nodes?.limit;
+        if (!c || !out) return;
+        out.disconnect();
+        if (A.el) {
+          A.el.pause();
+          A.el.srcObject = null;
+          A.el = null;
+        }
+        A.outPath = "system default";
+        const id = AOUT.dev;
+        if (typeof c.setSinkId === "function") {
+          try {
+            if (id || c.sinkId) await c.setSinkId(id);
+            A.outPath = id ? "direct" : "system default";
+          } catch {
+            toast("That output is not available: using the system default", 2600);
+          }
+          out.connect(c.destination);
+          return;
+        }
+        if (id && typeof HTMLMediaElement.prototype.setSinkId === "function") {
+          try {
+            const d = c.createMediaStreamDestination(),
+              el = new Audio();
+            out.connect(d);
+            el.srcObject = d.stream;
+            await el.setSinkId(id);
+            await el.play();
+            A.el = el;
+            A.outPath = "media player (adds delay)";
+            toast("This browser plays the chosen output through its media player: it adds delay", 3200);
+            return;
+          } catch {
+            out.disconnect();
+            toast("That output is not available: using the system default", 2600);
+          }
+        } else if (id) toast("This browser cannot choose the output: pick it in the system sound settings", 3200);
+        out.connect(c.destination);
+      }
       function listenStop() {
         ltStop();
+        if (A.el) {
+          A.el.pause();
+          A.el.srcObject = null;
+          A.el = null;
+        }
         A.stream?.getTracks().forEach((t) => t.stop());
         A.ctx?.close().catch(() => {});
         cancelAnimationFrame(A.raf);
@@ -1161,6 +1218,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
           ["Buffer (base)", ms(c?.baseLatency)],
           ["Output (estimate)", ms(c?.outputLatency)],
           ["Out total (estimate)", c && (c.baseLatency || c.outputLatency) ? ms((c.baseLatency || 0) + (c.outputLatency || 0)) : "—"],
+          ["Output", A.ctx ? A.outPath || "system default" : AOUT.dev ? AOUT.label || "chosen" : "system default"],
           ["Raw input", A.track ? (set.echoCancellation || set.noiseSuppression || set.autoGainControl ? "no (browser processing)" : "yes") : OPT.raw ? "yes" : "no"],
           ["Latency test", LAT ? LAT.ms.toFixed(0) + " ms ±" + (+LAT.spread || 0).toFixed(0) + " · " + new Date(LAT.at).toLocaleDateString() : "not run"],
         ];
@@ -1173,6 +1231,15 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         const sel = $("#ainDev");
         sel.innerHTML = `<option value="">Default input</option>` + devs.map((d, i) => `<option value="${esc(d.deviceId)}">${esc(d.label || "Input " + (i + 1))}</option>`).join("");
         sel.value = devs.some((d) => d.deviceId === AIN.dev) ? AIN.dev : "";
+        const outs = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === "audiooutput" && d.deviceId && d.deviceId !== "default"),
+          os = $("#aoutDev"),
+          known = outs.some((d) => d.deviceId === AOUT.dev);
+        os.innerHTML =
+          `<option value="">Output: system default</option>` +
+          outs.map((d, i) => `<option value="${esc(d.deviceId)}">Output: ${esc(d.label || "output " + (i + 1))}</option>`).join("") +
+          (AOUT.dev && !known ? `<option value="${esc(AOUT.dev)}">Output: ${esc(AOUT.label || "the one chosen before")}</option>` : "") +
+          (navigator.mediaDevices.selectAudioOutput ? `<option value="__pick">Output: choose another…</option>` : "");
+        os.value = AOUT.dev;
       }
       navigator.mediaDevices?.addEventListener?.("devicechange", () => ainList().catch(() => {}));
       function optFace() {
@@ -1197,6 +1264,28 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         optFace();
         toast("Input: " + e.target.selectedOptions[0].text);
         restart();
+      };
+      $("#aoutDev").onchange = async (e) => {
+        let id = e.target.value,
+          label = e.target.selectedOptions[0].text.replace(/^Output: /, "");
+        if (id === "__pick") {
+          // Firefox shows outputs only through its own picker
+          try {
+            const d = await navigator.mediaDevices.selectAudioOutput();
+            id = d.deviceId;
+            label = d.label;
+          } catch {
+            ainList();
+            return;
+          }
+        }
+        AOUT.dev = id;
+        AOUT.label = label;
+        aoutSave();
+        await ainList();
+        toast("Output: " + label);
+        await outRoute();
+        statsFace();
       };
       $("#ainCh").onchange = (e) => {
         AIN.ch = e.target.value;
@@ -1267,7 +1356,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
           gn.gain.setValueAtTime(0, t);
           gn.gain.linearRampToValueAtTime(0.4, t + 0.002);
           gn.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
-          o.connect(gn).connect(c.destination);
+          o.connect(gn).connect(A.nodes.post);
           o.start(t);
           o.stop(t + 0.05);
           LT.cues.push(o);
@@ -1429,14 +1518,14 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
               "**OPTIONS** (Files tab) has the numbers and the switches:",
               "- **Stats**: what the browser reports while listening: the input and its rate, the engine's rate (\"resampled\" means they differ, which adds delay), the size of one processing block, the browser's buffer and output estimates, and your last latency test.",
               "- **LATENCY TEST**: a ball bounces from wall to wall; each time it crosses the middle a click sounds. Pick a string with each click (muted notes are easiest), following the sound, not the ball. Two clicks to get the feel, then ten are measured. Because you play along with what you hear, your pick reaches the app one whole trip late, so the result is the real delay of your setup: under 30 ms feels like an amp. The result is kept (the looper will use it).",
-              "- **Audio input**: the input, its channel (on a two-input interface, input 1 is usually the instrument jack) and **GAIN**, kept for each input.",
+              "- **Audio input and output**: the input, its channel (on a two-input interface, input 1 is usually the instrument jack), **GAIN** (kept for each input) and the output. Chrome sends the sound straight to the chosen output; Firefox shows its own list (\"choose another…\") and plays through its media player, which adds delay, so in Firefox it is faster to pick the output in the system sound settings.",
               "- **Engine**: the sample rate (best: the same as the input), the buffer (interactive is the smallest; bigger ones help if the sound crackles), oversampling for the drive and the amp (smoother, a few ms later) and **RAW INPUT** (on: the browser does not touch your sound). Changing the rate, the buffer or the raw input restarts listening.",
             ],
             es: [
               "**OPTIONS** (pestaña Archivos) tiene los datos y los ajustes:",
               "- **Stats**: lo que dice el navegador mientras escucha: la entrada y su frecuencia de muestreo, la del motor (\"resampled\" significa que no coinciden, lo que añade retraso), el tamaño de un bloque de proceso, las estimaciones de búfer y salida del navegador, y tu última prueba de retraso.",
               "- **LATENCY TEST**: una bola rebota de pared a pared; cada vez que cruza el centro suena un clic. Toca una cuerda con cada clic (las notas apagadas son lo más fácil), siguiendo el sonido, no la bola. Dos clics para coger el ritmo y luego se miden diez. Como tocas con lo que oyes, tu nota llega a la app con un viaje completo de retraso, así que el resultado es el retraso real de tu equipo: menos de 30 ms se siente como un amplificador. El resultado se guarda (lo usará el looper).",
-              "- **Audio input**: la entrada, su canal (en una interfaz de dos entradas, la 1 suele ser la de instrumento) y **GAIN**, guardada para cada entrada.",
+              "- **Audio input and output**: la entrada, su canal (en una interfaz de dos entradas, la 1 suele ser la de instrumento), **GAIN** (guardada para cada entrada) y la salida. Chrome manda el sonido directo a la salida elegida; Firefox muestra su propia lista (\"choose another…\") y suena a través de su reproductor, lo que añade retraso, así que en Firefox es más rápido elegir la salida en los ajustes de sonido del sistema.",
               "- **Engine**: la frecuencia de muestreo (mejor: la misma que la entrada), el búfer (interactive es el más pequeño; uno mayor ayuda si el sonido chisporrotea), el sobremuestreo del drive y del amplificador (más suave, unos ms más tarde) y **RAW INPUT** (activado: el navegador no toca tu sonido). Cambiar la frecuencia, el búfer o la entrada en bruto reinicia la escucha.",
             ],
           },
