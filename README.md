@@ -13,7 +13,7 @@ Serve the folder from `localhost` or HTTPS (the browser only gives the microphon
 - **PEDALS, AMPS, CABS** (the bottom bar) show one unit at a time; **◁ ▷** or a swipe changes it. Drag a knob up or down; the switch turns the unit on.
 - **BOARD** (the squares icon at the top): the signal enters at the top right and snakes square by square to the speaker at the bottom right. Tap an empty square to add a unit, tap a unit twice to edit it, drag it to move it. **RIFF ▶** plays a test riff through the board.
 - **MIXER** (the faders icon, or the speaker square): guitar, test riff, tracks, loops, click and master volumes, mutes and meters.
-- **LOOPER** (the loop icon): tempo, loop length and click; tap an empty pad to count in and record your board, tap a loop to play or stop it on the bar; OVERDUB, CLEAR.
+- **LOOPER** (the loop icon, TUNE.Pocket's): tempo, click, loop length (1, 2, 4 or 8 bars), recording delay and auto quantize; tap an empty pad to count in and record your board, tap a loop to play or stop it on the bar. EDIT: volume, overdub, reverse, normalize, nudge, quantize, crop, clear. FX: repeat, reverse, octave. UNDO. The loops are kept on the device.
 - **TRACKS** (the note icon): add audio files from the device (kept in the browser, never uploaded) and play along.
 - **RECORD** starts listening. The thin bar under the top icons is the input level.
 - **The disk** (top right) opens Files: **FILES** (export, import, reset the board), **THEME**, **OPTIONS** and **HELP**.
