@@ -379,11 +379,16 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
       /* the selector: ◁ NAME ▷ */
       #pSel { display: flex; gap: 6px; margin: 6px 6px 0; height: 52px; flex: none; }
       #pSel button { width: 52px; font-size: 20px; }
-      #pSel #pDel { font-size: 16px; }
-      #pSel #pDel[hidden] { display: none; }
       #pSel b { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel2); font: 700 16px system-ui, sans-serif; text-align: center; overflow: hidden; white-space: nowrap; }
       #pSel b { cursor: pointer; }
       #pSel b small { font: 700 10px system-ui, sans-serif; color: var(--dim); letter-spacing: 1px; text-transform: uppercase; }
+      /* the unit is drawn at one size and zoomed to fill the room between the description and the waveform */
+      #unit { transform-origin: center; }
+      #pInfo { display: flex; align-items: center; gap: 8px; margin: 6px 6px 0; flex: none; min-height: 40px; }
+      #pDesc { flex: 1; font-size: 13px; line-height: 1.3; color: var(--dim); }
+      #pDel { flex: none; height: 36px; padding: 0 10px; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; }
+      #pDel[hidden] { display: none; }
+      #pWave { display: block; flex: none; width: calc(100% - 12px); height: 88px; margin: 0 6px 6px; border: 1px solid var(--line); border-radius: 8px; background: var(--wave, var(--panel)); }
       #iosWarn { margin: 6px 6px 0; border-color: var(--hot); color: var(--text); flex: none; }
       #stage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; position: relative; padding: 10px 0; touch-action: pan-y; }
       #stage::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 8px; margin-top: -4px; background: var(--line); }
@@ -397,7 +402,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
       .unit .fs { width: 76px; height: 76px; min-height: 0; border-radius: 50%; padding: 0; background: radial-gradient(circle at 40% 35%, #eee, #888 60%, #555); border: 3px solid #333; box-shadow: 0 4px 0 #222; }
       .unit .fs::after { content: ""; display: block; width: 34px; height: 34px; margin: auto; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #fff, #999); border: 2px solid #444; }
       .unit .fs:active { transform: translateY(3px); box-shadow: 0 1px 0 #222; }
-      .unit.pedal { width: min(62vw, 250px); height: min(100%, 400px); background: linear-gradient(160deg, color-mix(in srgb, var(--pc) 88%, #fff) 0%, var(--pc) 45%, color-mix(in srgb, var(--pc) 70%, #000) 100%); box-shadow: 0 10px 0 color-mix(in srgb, var(--pc) 45%, #000), 0 18px 30px rgba(0, 0, 0, 0.45); padding: 16px 8px 0; }
+      .unit.pedal { width: 250px; height: 400px; background: linear-gradient(160deg, color-mix(in srgb, var(--pc) 88%, #fff) 0%, var(--pc) 45%, color-mix(in srgb, var(--pc) 70%, #000) 100%); box-shadow: 0 10px 0 color-mix(in srgb, var(--pc) 45%, #000), 0 18px 30px rgba(0, 0, 0, 0.45); padding: 16px 8px 0; }
       .unit.pedal .kn { flex: 0 1 auto; }
       .unit.pedal .led { align-self: center; margin: auto 0 8px; }
       .unit.pedal .fs { align-self: center; margin-bottom: 10px; }
@@ -409,19 +414,19 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
       .unit .jl.in { right: 8px; }
       .unit .jl.out { left: 8px; }
       /* amp head: dark cabinet, a gold control panel, the power switch at the right */
-      .unit.amp { --ks: 44px; width: min(94vw, 470px); padding: 12px; background: #1b1714; border: 3px solid #0c0a08; box-shadow: 0 14px 30px rgba(0, 0, 0, 0.5); }
+      .unit.amp { --ks: 52px; width: 300px; padding: 12px; background: #1b1714; border: 3px solid #0c0a08; box-shadow: 0 14px 30px rgba(0, 0, 0, 0.5); }
       .unit.amp .top { display: flex; align-items: center; gap: 10px; padding: 0 4px 10px; }
       .unit.amp .plate { flex: 1; color: #e8d9b5; text-align: left; font-size: 16px; font-style: italic; }
       .unit.amp .panel { padding: 8px 2px; border-radius: 6px; background: linear-gradient(#d8c08a, #b49a62); border: 2px solid #6b5a33; }
-      .unit.amp .kn { flex-wrap: nowrap; justify-content: space-around; gap: 0; }
+      .unit.amp .kn { flex-wrap: wrap; justify-content: center; gap: 6px 2px; }
       .unit.amp .knob, .unit.cab .knob { width: calc(var(--ks) + 14px); }
       .unit.amp .fs { width: 44px; height: 44px; border-width: 2px; }
       .unit.amp .fs::after { width: 18px; height: 18px; }
       .unit.amp .grill { height: 34px; margin-top: 10px; border-radius: 4px; background: repeating-linear-gradient(45deg, #3a332b 0 3px, #2a241f 3px 6px); }
       /* cab: a box with a speaker; its knobs sit on a strip at the top */
-      .unit.cab { --ks: 44px; width: min(78vw, 320px); padding: 10px; background: #1b1714; border: 3px solid #0c0a08; box-shadow: 0 14px 30px rgba(0, 0, 0, 0.5); }
+      .unit.cab { --ks: 52px; width: 280px; padding: 10px; background: #1b1714; border: 3px solid #0c0a08; box-shadow: 0 14px 30px rgba(0, 0, 0, 0.5); }
       .unit.cab .strip { display: flex; align-items: center; gap: 8px; padding: 6px; border-radius: 6px; background: linear-gradient(#d8c08a, #b49a62); }
-      .unit.cab .kn { flex: 1; flex-wrap: nowrap; justify-content: space-around; }
+      .unit.cab .kn { flex: 1; flex-wrap: wrap; justify-content: center; }
       .unit.cab .fs { width: 44px; height: 44px; border-width: 2px; }
       .unit.cab .fs::after { width: 18px; height: 18px; }
       .unit.cab .spk { margin: 10px auto 4px; width: 78%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, #555 0 9%, #1a1a1a 10% 13%, #333 14% 40%, #222 41% 62%, #111 63% 66%, #2a2a2a 67% 100%); border: 4px solid #0c0a08; }
@@ -605,10 +610,11 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
           <button id="pPrev" title="Previous one" aria-label="Previous">◁</button>
           <b id="pName" role="button" tabindex="0" title="Tap to choose another one from the list"></b>
           <button id="pNext" title="Next one" aria-label="Next">▷</button>
-          <button id="pDel" title="Take this unit off the pedal board" aria-label="Take off the board">✕</button>
         </div>
         <div class="card hint" id="iosWarn" role="note" hidden></div>
+        <div id="pInfo"><span id="pDesc"></span><button id="pDel" title="Take this unit off the pedal board: it stops being part of the sound. It stays in the list and can be added again" hidden>TAKE OFF BOARD</button></div>
         <div id="stage"><div class="unit" id="unit"></div></div>
+        <canvas id="pWave" title="What this unit does to the sound: the grey line is what goes in, the coloured line is what comes out"></canvas>
       </section>
       <!-- PEDAL BOARD: tap an empty square to add a unit, tap a unit to turn it on or off, press and hold (or double tap) to open it, drag to move it -->
       <section id="board">
@@ -1165,6 +1171,34 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
       const FX = [...PEDALS, ...AMPS, ...CABS];
       const FXI = Object.fromEntries(FX.map((p) => [p.id, p]));
       const KINDS = { pedal: "PEDALS", amp: "AMPS", cab: "CABS" };
+      // a line about each unit, shown under the selector in live play: [English, Spanish]
+      const UDESC = {
+        gate: ["Silences the hiss between notes: what stays below THRESHOLD is cut off, and RELEASE sets how fast it fades.", "Silencia el siseo entre notas: lo que queda bajo THRESHOLD se corta, y RELEASE fija lo rápido que se apaga."],
+        comp: ["Evens out your picking: loud notes come down and quiet ones come up, so the sound is steadier and sustains longer.", "Iguala tu pulsación: las notas fuertes bajan y las suaves suben, así el sonido es más estable y dura más."],
+        boost: ["A clean volume lift: it pushes the next pedal or the amp harder, or makes you louder in a solo.", "Un empujón limpio de volumen: hace trabajar más al siguiente pedal o al ampli, o te sube en un solo."],
+        od: ["A smooth, mid-heavy drive: it breaks up like a tube amp pushed a little.", "Una saturación suave y de medios: se rompe como un ampli de válvulas empujado un poco."],
+        dist: ["A hard, tight distortion for rock and metal. FILTER darkens it.", "Una distorsión dura y apretada para rock y metal. FILTER la oscurece."],
+        fuzz: ["A thick, torn-up fuzz: the signal is squashed and clipped almost to a square wave.", "Un fuzz grueso y rasgado: la señal se aplasta y se recorta casi hasta una onda cuadrada."],
+        wah: ["A wah that follows how hard you play: dig in and it opens, ease off and it closes.", "Un wah que sigue lo fuerte que tocas: si pulsas fuerte se abre, si sueltas se cierra."],
+        eq: ["Five bands from low to high, up to 12 dB each way: shape the tone, cut the mud, lift the sparkle.", "Cinco bandas de graves a agudos, hasta 12 dB arriba o abajo: da forma al tono, quita lo embarrado y sube el brillo."],
+        cho: ["Doubles the sound with a slowly wobbling copy: shimmer and width.", "Dobla el sonido con una copia que oscila despacio: brillo y anchura."],
+        fla: ["A very short, swept delay mixed with the dry sound: a jet-plane whoosh.", "Un retardo muy corto que barre, mezclado con el sonido seco: un silbido de reactor."],
+        pha: ["Sweeps notches through the sound: a swirling, watery movement.", "Barre muescas por el sonido: un movimiento envolvente, como de agua."],
+        trem: ["Wobbles the volume up and down at a steady rate.", "Sube y baja el volumen a un ritmo constante."],
+        vib: ["Wobbles the pitch up and down: seasick and vintage.", "Sube y baja el tono: mareante y vintage."],
+        dly: ["Repeats your notes after a short time, fading away. TIME, REPEATS and MIX shape the echoes.", "Repite tus notas tras un momento, y se van apagando. TIME, REPEATS y MIX dan forma a los ecos."],
+        rev: ["A plate reverb: a smooth, bright wash of reflections behind every note.", "Una reverb de plancha: una nube suave y brillante de reflejos detrás de cada nota."],
+        room: ["A small-room reverb: a short, natural ambience that stays close to the dry sound.", "Una reverb de sala pequeña: un ambiente corto y natural, pegado al sonido seco."],
+        amp: ["A crunch amp: clean at low GAIN, breaking up as you turn it up. Put a cab after it.", "Un ampli crunch: limpio con poca ganancia, se rompe al subirla. Pon una pantalla detrás."],
+        clean: ["A clean, sparkling amp with lots of headroom: let the pedals bring the dirt. Put a cab after it.", "Un ampli limpio y brillante con mucho margen: que la suciedad la pongan los pedales. Pon una pantalla detrás."],
+        chime: ["A bright, chiming amp that rings out and breaks up gently. Put a cab after it.", "Un ampli brillante y campanilleante que suena largo y se rompe con suavidad. Pon una pantalla detrás."],
+        lead: ["A high-gain amp for solos and heavy riffs: thick, compressed, very saturated. Put a cab after it.", "Un ampli de mucha ganancia para solos y riffs pesados: grueso, comprimido y muy saturado. Pon una pantalla detrás."],
+        cab: ["A 1×12 open-back cab: airy and a little boxy, good with clean and crunch sounds.", "Una pantalla 1×12 abierta: aireada y algo cajonera, buena para limpio y crunch."],
+        c210: ["A small 1×10 tweed-style cab: warm and tight in the low end, with a vintage bite.", "Una pantalla pequeña 1×10 estilo tweed: cálida y apretada en graves, con mordiente vintage."],
+        c212: ["A 2×12 closed-back cab: full and focused, with a notch in the upper mids.", "Una pantalla 2×12 cerrada: llena y enfocada, con una muesca en los medios agudos."],
+        c412: ["A 4×12 British stack: a big, tight low end and a strong upper-mid push, for heavy tones.", "Una pantalla 4×12 británica: graves grandes y apretados y un empuje fuerte en los medios agudos, para tonos pesados."],
+      };
+      const descLang = () => localStorage.getItem("play.lang") || ((navigator.language || "en").toLowerCase().startsWith("es") ? "es" : "en");
       const ofKind = (k) => FX.filter((p) => p.kind === k);
       const fxDefaults = () => Object.fromEntries(FX.map((p) => [p.id, Object.fromEntries([["on", false], ...p.knobs.map((k) => [k[0], k[4]])])]));
       // saved and imported boards are untrusted: keep only known units and knobs, clamp every value
@@ -1439,6 +1473,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         if (!N) return;
         N.rig.disconnect();
         for (const id in N.u) N.u[id].out.disconnect();
+        A.tap = null; // the unit's output was just disconnected from its analyser: it is made again on the next frame
         let prev = N.rig;
         for (const id of S.slots)
           if (id) {
@@ -1655,7 +1690,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         A.stream?.getTracks().forEach((t) => t.stop());
         A.ctx?.close().catch(() => {});
         cancelAnimationFrame(A.raf);
-        Object.assign(A, { ctx: null, stream: null, nodes: null, meter: null, gain: null, track: null, onset: null, mic: false });
+        Object.assign(A, { ctx: null, stream: null, nodes: null, meter: null, gain: null, track: null, onset: null, mic: false, tap: null });
         $("#listen").classList.remove("on");
         $("#lvl i").style.width = "0";
         statsFace();
@@ -1678,6 +1713,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         $("#lvl").classList.toggle("clip", pk >= 0.98);
         if (S.view === "mix") mixMeters();
         if (S.view === "loop") lpFrame();
+        if (KINDS[S.view]) wavDraw();
         A.raf = requestAnimationFrame(meterLoop);
       }
       $("#listen").onclick = () => (A.mic ? (engineStop(), toast("Stopped listening")) : listenStart());
@@ -1778,6 +1814,95 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         el.setAttribute("aria-valuenow", v);
         el.setAttribute("aria-valuetext", k[5](v, k));
       }
+      // the unit is laid out at one size and zoomed to fill the room it has (the knobs and their numbers grow with it)
+      function unitFit() {
+        const el = $("#unit"),
+          st = $("#stage");
+        if (!st.clientWidth || !el.offsetWidth) return;
+        el.style.zoom = 1;
+        const z = Math.min((st.clientWidth - 28) / el.offsetWidth, (st.clientHeight - 24) / el.offsetHeight, 2);
+        el.style.zoom = Math.max(0.6, z).toFixed(3);
+      }
+      new ResizeObserver(unitFit).observe($("#stage"));
+      // the waveform banner: what goes into the shown unit (grey) and what comes out (coloured), read from two analysers on its jacks
+      function wavUntap() {
+        const t = A.tap;
+        A.tap = null;
+        if (!t) return;
+        try {
+          t.un.in.disconnect(t.ai);
+          t.un.out.disconnect(t.ao);
+        } catch {}
+      }
+      function wavTap() {
+        const N = A.nodes,
+          id = cur().id;
+        if (!N || !A.ctx) return null;
+        if (!A.tap || A.tap.id !== id || A.tap.N !== N) {
+          wavUntap();
+          const ai = A.ctx.createAnalyser(),
+            ao = A.ctx.createAnalyser();
+          ai.fftSize = ao.fftSize = 2048;
+          N.u[id].in.connect(ai);
+          N.u[id].out.connect(ao);
+          A.tap = { id, N, ai, ao, bi: new Float32Array(2048), bo: new Float32Array(2048), un: N.u[id] };
+        }
+        return A.tap;
+      }
+      function wavDraw() {
+        const cv = $("#pWave"),
+          w = cv.clientWidth,
+          h = cv.clientHeight,
+          dpr = devicePixelRatio || 1;
+        if (!w || !KINDS[S.view]) return;
+        if (cv.width !== Math.round(w * dpr)) ((cv.width = Math.round(w * dpr)), (cv.height = Math.round(h * dpr)));
+        const g = cv.getContext("2d"),
+          cs = getComputedStyle(document.documentElement),
+          dim = cs.getPropertyValue("--dim"),
+          acc = cs.getPropertyValue("--acc"),
+          id = cur().id,
+          t = wavTap();
+        g.setTransform(dpr, 0, 0, dpr, 0, 0);
+        g.clearRect(0, 0, w, h);
+        g.fillStyle = dim;
+        g.fillRect(0, h / 2, w, 1);
+        g.font = "700 11px " + (cs.getPropertyValue("--mono") || "monospace");
+        const say = (m) => ((g.textAlign = "center"), (g.fillStyle = dim), g.fillText(m, w / 2, h / 2 - 8));
+        if (!t) return say("Tap the mic or RIFF ▶ to see it at work");
+        if (!S.slots.includes(id)) return say("Not on the pedal board: no sound reaches it");
+        t.ai.getFloatTimeDomainData(t.bi);
+        t.ao.getFloatTimeDomainData(t.bo);
+        let pi = 0,
+          po = 0;
+        for (let k = 0; k < 2048; k++) ((pi = Math.max(pi, Math.abs(t.bi[k]))), (po = Math.max(po, Math.abs(t.bo[k]))));
+        if (Math.max(pi, po) < 0.003) return say("Play something, or tap RIFF ▶");
+        // start on a rising crossing of the input, so the picture stands still
+        let i0 = 1;
+        while (i0 < 900 && !(t.bi[i0 - 1] < 0 && t.bi[i0] >= 0)) i0++;
+        if (i0 >= 900) i0 = 0;
+        const n = 1000,
+          sc = (h / 2 - 6) / Math.max(0.05, pi, po),
+          line = (buf, col, lw) => {
+            g.beginPath();
+            for (let k = 0; k < n; k++) {
+              const x = (k / (n - 1)) * w,
+                y = h / 2 - buf[i0 + k] * sc;
+              k ? g.lineTo(x, y) : g.moveTo(x, y);
+            }
+            g.strokeStyle = col;
+            g.lineWidth = lw;
+            g.stroke();
+          };
+        line(t.bi, dim, 1.5);
+        line(t.bo, acc, 2);
+        const d = (v) => (v > 0.0003 ? (20 * Math.log10(v)).toFixed(1) : "−∞");
+        g.textAlign = "left";
+        g.fillStyle = dim;
+        g.fillText("IN " + d(pi) + " dB", 8, 14);
+        g.textAlign = "right";
+        g.fillStyle = acc;
+        g.fillText("OUT " + d(po) + " dB", w - 8, 14);
+      }
       function renderUnit() {
         const list = ofKind(S.kind),
           p = cur(),
@@ -1786,6 +1911,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         $("#pName").innerHTML = `<small>${KINDS[S.kind].slice(0, -1)} ${S.sel[S.kind] + 1}/${list.length}</small>${esc(p.name)}`;
         $("#pPrev").disabled = $("#pNext").disabled = list.length < 2;
         $("#pDel").hidden = !S.slots.includes(p.id);
+        $("#pDesc").textContent = (UDESC[p.id] || ["", ""])[descLang() === "es" ? 1 : 0];
         el.className = "unit " + p.kind + (s.on ? "" : " off");
         el.style.setProperty("--pc", p.col || "#888");
         const kn = p.knobs
@@ -1799,6 +1925,8 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
           el.innerHTML = `<div class="top"><div class="plate">${esc(p.name)}</div><span class="led"></span>${sw("Power: the amp on or off")}</div><div class="panel"><div class="kn">${kn}</div></div><div class="grill"></div>`;
         else el.innerHTML = `<div class="strip"><div class="kn">${kn}</div><span class="led"></span>${sw("The cab on or off")}</div><div class="spk"></div><div class="plate">${esc(p.name)}</div>`;
         $$("#unit .knob").forEach(knobFace);
+        unitFit();
+        wavDraw();
       }
       function setKnob(el, v, final) {
         const p = cur(),
@@ -2238,7 +2366,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         applyFx(p.id);
         rewire();
         renderUnit();
-        toast(p.name + " taken off the pedal board");
+        toast(p.name + " taken off the pedal board: it is not in the sound now");
       };
       // the picker. From a board square: every unit not on the board yet, by kind. From the live play tab (tap the name):
       // every unit of the kind shown, to choose which one to see.
@@ -3461,18 +3589,18 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
               "- Tap an **empty square** (+) to add a pedal, amp or cab there; it comes in switched on.",
               "- Tap a unit to turn it **on or off** (a dimmed unit is off). **Press and hold** it, or **double tap**, to open it full screen in LIVE PLAY.",
               "- **Drag** a unit onto another square to swap them, or onto an empty one to move it. A drive before the amp and the delay and reverb after the cab is the classic order, but try anything.",
-              "- To take a unit off the board, open it in LIVE PLAY and tap **✕**. A unit that is off lets the sound through untouched; one that is not on the board is not in the sound at all.",
+              "- To take a unit off the board, open it in LIVE PLAY and tap **TAKE OFF BOARD** (beside its description). A unit that is off lets the sound through untouched; one that is not on the board is not in the sound at all.",
               "- The **speaker** opens the MIXER.",
-              "- The pedal icon opens **LIVE PLAY**: one unit full screen. Tap its **name** for the list of that kind, **◁ ▷** to step through, **CABS, AMPS, PEDALS** to change kind. **RIFF ▶** (bottom left) plays a looped test riff (a guitar straight into the interface, made by the app) through the rig, so you can try sounds without playing. It works with or without the mic.",
+              "- The pedal icon opens **LIVE PLAY**: one unit full screen. Tap its **name** for the list of that kind, **◁ ▷** to step through, **CABS, AMPS, PEDALS** to change kind. **RIFF ▶** (bottom left) plays a looped test riff (a guitar straight into the interface, made by the app) through the rig, so you can try sounds without playing. It works with or without the mic. Under the name is a line about what the unit does, and the **waveform** at the bottom shows what goes into it (grey) and what comes out (coloured), with their levels, while you play.",
             ],
             es: [
                             "El icono de cuadrados de arriba abre el **PEDAL BOARD**: el orden por el que pasa tu sonido. Entra arriba a la derecha y va de derecha a izquierda, baja, de izquierda a derecha, baja... siguiendo el cable hasta el **altavoz** al final. El board llena la pantalla de casillas: cuanto más espacio, más filas (hasta 27 unidades).",
               "- Toca una **casilla vacía** (+) para poner ahí un pedal, amplificador o pantalla; entra encendido.",
               "- Toca una unidad para **encenderla o apagarla** (una atenuada está apagada). **Mantén pulsado** o **toca dos veces** para abrirla a pantalla completa en LIVE PLAY.",
               "- **Arrastra** una unidad a otra casilla para intercambiarlas, o a una vacía para moverla. Lo clásico es la saturación antes del amplificador y el delay y la reverb después de la pantalla, pero prueba lo que quieras.",
-              "- Para quitar una unidad del board, ábrela en LIVE PLAY y toca **✕**. Una unidad apagada deja pasar el sonido sin tocarlo; una que no está en el board no está en el sonido.",
+              "- Para quitar una unidad del board, ábrela en LIVE PLAY y toca **TAKE OFF BOARD** (junto a su descripción). Una unidad apagada deja pasar el sonido sin tocarlo; una que no está en el board no está en el sonido.",
               "- El **altavoz** abre el MIXER.",
-              "- El icono del pedal abre **LIVE PLAY**: una unidad a pantalla completa. Toca su **nombre** para ver la lista de ese tipo, **◁ ▷** para pasar de una a otra, **CABS, AMPS, PEDALS** para cambiar de tipo. **RIFF ▶** (abajo a la izquierda) toca en bucle un riff de prueba (una guitarra directa a la interfaz, generada por la app) a través del equipo, para probar sonidos sin tocar. Funciona con o sin el micrófono.",
+              "- El icono del pedal abre **LIVE PLAY**: una unidad a pantalla completa. Toca su **nombre** para ver la lista de ese tipo, **◁ ▷** para pasar de una a otra, **CABS, AMPS, PEDALS** para cambiar de tipo. **RIFF ▶** (abajo a la izquierda) toca en bucle un riff de prueba (una guitarra directa a la interfaz, generada por la app) a través del equipo, para probar sonidos sin tocar. Funciona con o sin el micrófono. Bajo el nombre hay una línea sobre lo que hace la unidad, y la **onda** de abajo muestra lo que entra (gris) y lo que sale (de color), con sus niveles, mientras tocas.",
             ],
           },
         },
