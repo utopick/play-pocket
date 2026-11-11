@@ -365,6 +365,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
       #pSel b { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); font: 900 18px var(--mono); letter-spacing: 2px; }
       #pSel b small { font: 700 10px var(--mono); color: var(--dim); letter-spacing: 1px; }
       /* the pedal: a box with knobs, jacks on the sides, a footswitch and the name plate */
+      #iosWarn { margin: 8px 8px 0; border-color: var(--hot); color: var(--text); flex: none; }
       #stage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; position: relative; padding: 10px 0; touch-action: pan-y; }
       #stage::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 8px; margin-top: -4px; background: var(--line); }
       .pedal { --pc: #2fb36b; position: relative; z-index: 1; width: min(62vw, 250px); height: min(100%, 400px); max-height: 400px; aspect-ratio: 5 / 8; border-radius: 14px; background: linear-gradient(160deg, color-mix(in srgb, var(--pc) 88%, #fff) 0%, var(--pc) 45%, color-mix(in srgb, var(--pc) 70%, #000) 100%); box-shadow: 0 10px 0 color-mix(in srgb, var(--pc) 45%, #000), 0 18px 30px rgba(0, 0, 0, 0.45); display: grid; grid-template-rows: auto auto 1fr auto; padding: 16px 12px 0; color: #111; }
@@ -434,6 +435,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
           <b id="pName"></b>
           <button id="pNext" title="Next pedal" aria-label="Next pedal">▷</button>
         </div>
+        <div class="card hint" id="iosWarn" role="note" hidden></div>
         <div id="stage"><div class="pedal" id="pedal"></div></div>
       </section>
       <!-- AMPS / CABS (not built yet) -->
@@ -652,7 +654,14 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
           }
         }
       }
+      // iPhone and iPad: every browser there uses Apple's engine, which only hears the built-in mic and is too slow to play through
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      const IOS_T = {
+        en: "iPhone and iPad are not supported yet: their browsers only hear the built-in microphone (not a guitar cable or an interface) and play it back about 0.1 s late. Use a computer (Chrome or Firefox) or Android (Firefox).",
+        es: "iPhone y iPad aún no están soportados: sus navegadores solo oyen el micrófono interno (no un cable de guitarra ni una interfaz) y lo devuelven con unos 0,1 s de retraso. Usa un ordenador (Chrome o Firefox) o Android (Firefox).",
+      };
       async function listenStart() {
+        if (isIOS) toast(IOS_T[HLANG] || IOS_T.en, 4000);
         if (!navigator.mediaDevices?.getUserMedia) return toast("This browser cannot open an audio input (it needs https or localhost)", 3000);
         try {
           const audio = { echoCancellation: false, noiseSuppression: false, autoGainControl: false };
@@ -1108,6 +1117,10 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
       // boot
       // ======================================================================
       setTheme(document.documentElement.dataset.theme);
+      if (isIOS) {
+        $("#iosWarn").textContent = "⚠ " + (IOS_T[HLANG] || IOS_T.en);
+        $("#iosWarn").hidden = false;
+      }
       ainFace();
       renderPedal();
     </script>
