@@ -7,7 +7,7 @@
 
   Layout of this file
     <head>    theme bootstrap (reads localStorage before first paint), <style>
-    <body>    header, the rig view (pedals, amps and cabs share it), board, looper, tracks, mixer and files, bottom bar, unit picker,
+    <body>    header, the rig view (pedals, amps and cabs share it), board, looper, tracks, mixer and files, bottom bar of the live play tab, unit picker,
               latency test, help, toast
     <script>  helpers, units (PEDALS, AMPS, CABS: docs/UNITS.md says where each comes from), state, options, audio
               engine (input, test riff, faders, the board's units in order, worklets), test riff, rig view and knobs,
@@ -15,7 +15,7 @@
 
   Storage
     localStorage  play.state   { sel: { pedal, amp, cab: index shown }, fx: { <unit id>: { on, <knob id>: value } },
-                                 slots: [15 unit ids in signal order, "" = empty square],
+                                 slots: [27 unit ids in signal order, "" = empty square],
                                  mix: { gtr | riff | trk | loop | click | master: { v: 0..1.5, m: muted } },
                                  loop: { bpm: 40..240, bars: 1 | 2 | 4 | 8, click: bool, trLoop: repeat tracks,
                                          mon: hear the loops while layering, aq: auto quantize, grid: 0..3, sync: recording delay in ms (-1 = auto), latch: loop FX } }
@@ -366,11 +366,12 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
       html:not([data-theme]), html[data-theme="dark"] { --acc: #ff9f1c; --brand: #ff9f1c; --ink: #1a0f00; --playbg: #3a2a12; --playbg2: #4a3416; }
       html[data-theme="light"] { --acc: #e07b00; --brand: #e07b00; --ink: #ffffff; --playbg: #fde3c0; --playbg2: #fcd6a4; }
       header .hv { width: 44px; height: 44px; min-height: 0; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 6px; flex: none; }
-      header #hBoard { margin-left: auto; }
+      header #listen { margin-left: auto; }
+      header #listen.on { background: var(--hot); border-color: var(--hot); color: #fff; }
       header .hv + .hv { margin-left: 2px; }
       header .hv.on { background: var(--acc); border-color: var(--acc); color: var(--ink); }
       body.pocket header { position: relative; }
-      header .hv { width: 42px !important; }
+      header .hv { width: 38px !important; }
       #lvl { position: absolute; left: 6px; right: 6px; bottom: 0; height: 3px; border-radius: 2px; overflow: hidden; background: var(--line); }
       #lvl i { display: block; height: 100%; width: 0; background: var(--acc); }
       #lvl.clip i { background: var(--hot); }
@@ -378,7 +379,10 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
       /* the selector: ◁ NAME ▷ */
       #pSel { display: flex; gap: 6px; margin: 6px 6px 0; height: 52px; flex: none; }
       #pSel button { width: 52px; font-size: 20px; }
+      #pSel #pDel { font-size: 16px; }
+      #pSel #pDel[hidden] { display: none; }
       #pSel b { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel2); font: 700 16px system-ui, sans-serif; text-align: center; overflow: hidden; white-space: nowrap; }
+      #pSel b { cursor: pointer; }
       #pSel b small { font: 700 10px system-ui, sans-serif; color: var(--dim); letter-spacing: 1px; text-transform: uppercase; }
       #iosWarn { margin: 6px 6px 0; border-color: var(--hot); color: var(--text); flex: none; }
       #stage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; position: relative; padding: 10px 0; touch-action: pan-y; }
@@ -432,12 +436,11 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
       .knob small { font: 700 10px var(--mono); color: rgba(0, 0, 0, 0.65); min-height: 12px; }
       .unit.amp .knob b, .unit.cab .knob b { font-size: 9px; }
       .knob:focus-visible { outline: 2px solid var(--hi, #fff); outline-offset: 2px; border-radius: 8px; }
-      /* the bottom bar: RECORD (listen) · CABS · AMPS · PEDALS */
+      /* the bottom bar, live play tab only: TEST RIFF · CABS · AMPS · PEDALS (the mic that listens is in the header) */
       #vTabs { height: 58px; margin: 0 0 calc(6px + env(safe-area-inset-bottom)); }
       #vTabs > button { flex: 1; font-size: 13px; }
       #vTabs .ic { width: 20px; height: 20px; margin-bottom: 2px; }
-      #vTabs #listen.on { background: var(--hot); border-color: var(--hot); color: #fff; }
-      #vTabs #listen.on i { color: #fff; }
+      #vTabs[hidden] { display: none; }
       /* files: the panels, the bar under them opens one at a time */
       #files { padding-bottom: 6px; }
       #files .fpanel { flex: 0 1 auto; min-height: 0; overflow: auto; touch-action: pan-y; margin: 6px; }
@@ -455,8 +458,10 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
       /* BOARD: 16 squares, the signal snakes from the top right (right to left, down, left to right, down...) to the
          speaker at the bottom right. The cable is one SVG line under the squares. */
       #board, #mix { padding-bottom: 6px; }
+      #board { padding-bottom: calc(6px + env(safe-area-inset-bottom)); }
       #bWrap { flex: 1; min-height: 0; container-type: size; display: flex; align-items: center; justify-content: center; margin: 6px; }
-      #bGrid { position: relative; width: min(100cqw, 100cqh); height: min(100cqw, 100cqh); display: grid; grid-template: repeat(4, 1fr) / repeat(4, 1fr); touch-action: none; }
+      /* 4 columns and as many rows as fit (4 to 7): the grid takes all the room, the squares stretch a little to fill it */
+      #bGrid { --rows: 4; position: relative; width: 100cqw; height: min(100cqh, calc(100cqw * var(--rows) / 4 * 1.2)); display: grid; grid-template: repeat(var(--rows), 1fr) / repeat(4, 1fr); touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
       #cable { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
       #cable path { fill: none; stroke: #111; stroke-width: 7; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
       #cable path + path { stroke: var(--acc); stroke-width: 2; stroke-dasharray: 6 10; opacity: 0.5; }
@@ -476,8 +481,8 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
       #bGrid .sq.spk { background: var(--panel); color: var(--acc); }
       #bGrid .sq.spk svg { width: 60%; height: 60%; fill: none; stroke: currentColor; stroke-width: 1.6; }
       #bIn { position: absolute; right: -4px; top: 12.5%; transform: translate(0, -50%); font: 900 8px var(--mono); color: var(--acc); pointer-events: none; }
-      #bRib, #mRib { height: 52px; margin: 0; }
-      #bRib > button, #mRib > button { flex: 1; font-size: 12px; }
+      #mRib { height: 52px; margin: 0; }
+      #mRib > button { flex: 1; font-size: 12px; }
       .riffBtn.on { background: var(--acc); border-color: var(--acc); color: var(--ink); }
       /* LOOPER: settings row, 16 pads (the sister apps' squares), the FX pads and the edit tools swap in the middle, the ribbon */
       #loop > .prow, #loop #lFxP > .prow, #loop #lEdit > .prow { margin-bottom: 0; }
@@ -536,6 +541,9 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
       #pick h3 { margin: 6px 0 0; font-size: 13px; letter-spacing: 1px; }
       #pick .pl { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 6px; }
       #pick .pl button { font-size: 11px; border-left: 8px solid var(--pc, var(--line)); }
+      #pick .pl button.on { background: var(--acc); border-color: var(--acc); color: var(--ink); }
+      #pick .pl button b { color: var(--acc); }
+      #pick .pl button.on b { color: var(--ink); }
       /* MIXER: one strip per source, then the master */
       #mixer { margin: 6px; display: flex; flex-direction: column; gap: 10px; }
       .strip { display: grid; grid-template-columns: 74px 1fr 52px 44px; grid-template-rows: auto 6px; gap: 4px 8px; align-items: center; }
@@ -567,7 +575,13 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         ><span class="sub">Pocket</span>
       </button>
       <div id="lvl" title="Input level"><i></i></div>
-      <button class="hv" id="hBoard" data-v="board" title="Board: the order of your pedals, amps and cabs">
+      <button class="hv" id="listen" title="Start listening: your instrument plays through the rig. Tap again to stop.">
+        <svg class="ic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>
+      </button>
+      <button class="hv on" id="hLive" data-v="live" title="Live play: one pedal, amp or cab full screen, to play with its knobs">
+        <svg class="ic" viewBox="0 0 24 24"><rect x="6" y="2.5" width="12" height="19" rx="2" /><circle cx="9.5" cy="7" r="1.2" /><circle cx="14.5" cy="7" r="1.2" /><circle cx="12" cy="16" r="2.4" /></svg>
+      </button>
+      <button class="hv" id="hBoard" data-v="board" title="Pedal board: the order of your pedals, amps and cabs. Tap a unit to turn it on or off, press and hold it (or double tap) to open it">
         <svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1" /><rect x="13" y="3" width="8" height="8" rx="1" /><rect x="3" y="13" width="8" height="8" rx="1" /><rect x="13" y="13" width="8" height="8" rx="1" /></svg>
       </button>
       <button class="hv" id="hLoop" data-v="loop" title="Looper: record loops in time and play over them">
@@ -589,22 +603,17 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
       <section id="rig" class="show">
         <div id="pSel">
           <button id="pPrev" title="Previous one" aria-label="Previous">◁</button>
-          <b id="pName"></b>
+          <b id="pName" role="button" tabindex="0" title="Tap to choose another one from the list"></b>
           <button id="pNext" title="Next one" aria-label="Next">▷</button>
+          <button id="pDel" title="Take this unit off the pedal board" aria-label="Take off the board">✕</button>
         </div>
         <div class="card hint" id="iosWarn" role="note" hidden></div>
         <div id="stage"><div class="unit" id="unit"></div></div>
       </section>
-      <!-- BOARD: tap an empty square to add a unit, tap a unit to pick it (again to edit it), drag to move it -->
+      <!-- PEDAL BOARD: tap an empty square to add a unit, tap a unit to turn it on or off, press and hold (or double tap) to open it, drag to move it -->
       <section id="board">
         <div id="bWrap">
           <div id="bGrid"><svg id="cable" viewBox="0 0 400 400" preserveAspectRatio="none"><path /><path /></svg></div>
-        </div>
-        <div class="prow" id="bRib">
-          <button class="riffBtn" title="Play a test riff through the board (a looped guitar riff made in the app). Tap again to stop."><i>TEST</i>RIFF ▶</button>
-          <button id="bOn" title="The chosen unit on or off"><i>UNIT</i>ON/OFF</button>
-          <button id="bEdit" title="Open the chosen unit to turn its knobs"><i>KNOBS</i>EDIT</button>
-          <button id="bDel" title="Take the chosen unit off the board"><i>UNIT</i>REMOVE</button>
         </div>
       </section>
       <!-- LOOPER: tap an empty pad, it counts in and records; tap a loop to play or stop it -->
@@ -716,19 +725,17 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
     </main>
 
     <div class="prow" id="vTabs">
-      <button id="listen" title="Start listening: your instrument plays through the rig. Tap again to stop.">
-        <svg class="ic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg><i>LISTEN</i>RECORD
-      </button>
+      <button class="riffBtn" title="Play a test riff through the rig (a looped guitar riff made in the app). Tap again to stop."><i>TEST</i>RIFF ▶</button>
       <button data-v="cab" title="Speaker cabinets"><i>SPEAKER</i>CABS</button>
       <button data-v="amp" title="Amplifiers"><i>MODEL</i>AMPS</button>
       <button data-v="pedal" class="on" title="Your pedals"><i>EFFECTS</i>PEDALS</button>
     </div>
 
     <div id="pick" hidden>
-      <div class="card" role="dialog" aria-modal="true" aria-label="Add a unit">
+      <div class="card" role="dialog" aria-modal="true" aria-label="Choose a unit">
         <h3 id="pickT">Add to the board</h3>
         <div id="pickL"></div>
-        <button id="pickClose" title="Close without adding">CLOSE</button>
+        <button id="pickClose" title="Close the list">CLOSE</button>
       </div>
     </div>
 
@@ -1172,9 +1179,10 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         }
         return d;
       }
-      // the board: 15 squares in signal order (the 16th is the speaker); each holds a unit id or "" (empty).
+      // the pedal board: up to 27 squares in signal order (the speaker is the square after the last one shown); each holds a unit id or "" (empty).
+      // The screen shows as many rows of 4 as fit (4 to 7), so an old board of 15 squares keeps its order and gets room to grow.
       // The first prototype's fixed chain is the default, so old saved settings keep their sound.
-      const SLOTS = 15;
+      const SLOTS = 27;
       const BOARD0 = ["od", "amp", "cab", "cho", "trem", "dly", "rev"];
       function vetSlots(a) {
         const seen = new Set(),
@@ -1230,7 +1238,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
       };
 
       // ======================================================================
-      // audio engine. It runs with the microphone (RECORD) or without it (RIFF, the mixer):
+      // audio engine. It runs with the microphone (the mic icon) or without it (RIFF, the mixer):
       //   guitar (mic) -> input gain -> GUITAR fader --\
       //   test riff ----------------> RIFF fader -----> rig in -> the board's units in signal order -> MASTER -> limiter -> out
       // Every unit is built once; switching it off crossfades to its dry path, so nothing is rebuilt while playing.
@@ -1572,7 +1580,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         meterLoop();
         mixMeters();
       }
-      // RECORD: the engine with the microphone. The engine started without it (by RIFF) restarts with it.
+      // the mic icon: the engine with the microphone. The engine started without it (by RIFF) restarts with it.
       async function listenStart() {
         const riff = !!A.riff;
         try {
@@ -1777,6 +1785,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
           el = $("#unit");
         $("#pName").innerHTML = `<small>${KINDS[S.kind].slice(0, -1)} ${S.sel[S.kind] + 1}/${list.length}</small>${esc(p.name)}`;
         $("#pPrev").disabled = $("#pNext").disabled = list.length < 2;
+        $("#pDel").hidden = !S.slots.includes(p.id);
         el.className = "unit " + p.kind + (s.on ? "" : " off");
         el.style.setProperty("--pc", p.col || "#888");
         const kn = p.knobs
@@ -1834,7 +1843,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
           s = S.fx[p.id];
         if (!s.on && !S.slots.includes(p.id)) {
           const free = S.slots.indexOf("");
-          if (free < 0) return toast("The board is full: remove a unit in BOARD first", 2600);
+          if (free < 0) return toast("The pedal board is full: take a unit off it first", 2600);
           S.slots[free] = p.id;
           rewire();
           toast(p.name + " added to the board, square " + (free + 1));
@@ -1843,7 +1852,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         save();
         applyFx(p.id);
         renderUnit();
-        if (S.slots.includes(p.id) || !s.on) toast(p.name + (s.on ? " on" : " off") + (s.on && !A.ctx ? " · tap RECORD to listen" : ""));
+        if (S.slots.includes(p.id) || !s.on) toast(p.name + (s.on ? " on" : " off") + (s.on && !A.ctx ? " · tap the mic to listen" : ""));
       });
       const unitStep = (d) => {
         const n = ofKind(S.kind).length;
@@ -1867,6 +1876,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
       // views: pedal, amp and cab share the rig view; files is its own
       // ======================================================================
       function showView(v) {
+        if (v === "live") v = S.kind; // the live play tab shows the last pedal, amp or cab you had
         S.view = v;
         if (KINDS[v]) {
           S.kind = v;
@@ -1879,6 +1889,8 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         if (v === "files" && !fpOpen) filePanel("files"); // the tab opens on its first panel, like the sister apps' file tabs
         $$("main > section").forEach((s) => s.classList.toggle("show", s.id === (KINDS[v] ? "rig" : v)));
         $$("#vTabs [data-v], header [data-v]").forEach((b) => b.classList.toggle("on", b.dataset.v === v));
+        $("#hLive").classList.toggle("on", !!KINDS[v]);
+        $("#vTabs").hidden = !KINDS[v]; // the kind tabs and the test riff belong to the live play tab only
       }
       $("#vTabs").addEventListener("click", (e) => {
         const b = e.target.closest("[data-v]");
@@ -2076,24 +2088,38 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
       };
 
       // ======================================================================
-      // BOARD: 15 squares and the speaker, in a snake: the signal enters at the top right and runs right to left,
-      // down, left to right, down... to the speaker at the bottom right. Square i (0 = the first one the guitar reaches):
+      // PEDAL BOARD: the squares and the speaker, in a snake: the signal enters at the top right and runs right to left,
+      // down, left to right, down... to the speaker at the end. Square i (0 = the first one the guitar reaches).
+      // The grid has 4 columns and as many rows as the screen has room for (4 to 7): no empty strips of screen.
+      // A tap turns a unit on or off, a long press or a double tap opens it full screen (LIVE PLAY), a drag moves it.
       // ======================================================================
       const sqRC = (i) => {
         const r = Math.floor(i / 4);
         return [r, r % 2 ? i % 4 : 3 - (i % 4)];
       };
-      const B = { sel: -1, drag: null, dragged: false };
+      const B = { drag: null, dragged: false, rows: 4, hold: 0 };
       const DARK_UNITS = new Set(["dist", "comp"]);
       const kindCol = (p) => p.col || (p.kind === "amp" ? "#c9ad72" : "#4a4038");
+      // rows that fit the room (squares are as wide as the screen allows), and at least the rows the units already placed need
+      function boardRows() {
+        const w = $("#bWrap").clientWidth,
+          h = $("#bWrap").clientHeight,
+          last = S.slots.reduce((m, id, i) => (id ? i : m), -1),
+          need = Math.ceil((last + 2) / 4);
+        let rows = w > 0 && h > 0 ? Math.round(h / (w / 4)) : B.rows; // rounded: the squares stretch a little to use all the room
+        rows = Math.max(4, Math.min(7, rows), need);
+        return (B.rows = rows);
+      }
       function boardFace() {
-        const g = $("#bGrid");
+        const g = $("#bGrid"),
+          rows = boardRows(),
+          n = rows * 4 - 1; // the speaker's square
         let h = "";
-        for (let i = 0; i < 16; i++) {
+        for (let i = 0; i <= n; i++) {
           const [r, c] = sqRC(i),
             pos = `grid-row:${r + 1};grid-column:${c + 1}`;
-          if (i === 15) {
-            h += `<button class="sq spk" data-i="15" style="${pos}" title="The speaker: opens the mixer" aria-label="Speaker: open the mixer"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" /><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11" /></svg>MIXER</button>`;
+          if (i === n) {
+            h += `<button class="sq spk" data-i="${n}" style="${pos}" title="The speaker: opens the mixer" aria-label="Speaker: open the mixer"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" /><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11" /></svg><small>MIXER</small></button>`;
             continue;
           }
           const id = S.slots[i],
@@ -2104,45 +2130,69 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
           }
           const on = S.fx[id].on,
             dark = p.kind === "cab" || DARK_UNITS.has(id) ? " dark" : "";
-          h += `<button class="sq unit-in${dark}${on ? "" : " off"}${B.sel === i ? " sel" : ""}" data-i="${i}" style="${pos};--pc:${kindCol(p)}" title="${esc(p.name)} (${on ? "on" : "off"}): tap to choose it, tap again to edit, drag to move" aria-label="Square ${i + 1}: ${esc(p.name)}, ${on ? "on" : "off"}"><span class="led"></span>${esc(p.name)}<small>${esc(KINDS[p.kind].slice(0, -1))}</small></button>`;
+          h += `<button class="sq unit-in${dark}${on ? "" : " off"}" data-i="${i}" style="${pos};--pc:${kindCol(p)}" title="${esc(p.name)} (${on ? "on" : "off"}): tap to turn it ${on ? "off" : "on"}, press and hold or double tap to open it, drag to move it" aria-label="${esc(p.name)}, ${p.kind}, ${on ? "on" : "off"}"><span class="led"></span>${esc(p.name)}<small>${p.kind.toUpperCase()}</small></button>`;
         }
         // the cable: in at the right edge of the first row, through every square's centre, to the speaker
-        const pts = [[400, 50], ...Array.from({ length: 16 }, (_, i) => sqRC(i)).map(([r, c]) => [c * 100 + 50, r * 100 + 50])];
+        const pts = [[400, 50], ...Array.from({ length: n + 1 }, (_, i) => sqRC(i)).map(([r, c]) => [c * 100 + 50, r * 100 + 50])];
         const d = "M" + pts.map((q) => q.join(" ")).join(" L");
-        g.innerHTML = `<svg id="cable" viewBox="0 0 400 400" preserveAspectRatio="none"><path d="${d}"/><path d="${d}"/></svg><span id="bIn">IN ◁</span>` + h;
+        g.style.setProperty("--rows", rows);
+        g.innerHTML = `<svg id="cable" viewBox="0 0 400 ${rows * 100}" preserveAspectRatio="none"><path d="${d}"/><path d="${d}"/></svg><span id="bIn">IN ◁</span>` + h;
         $("#cable").classList.toggle("live", !!A.ctx);
-        const sel = FXI[S.slots[B.sel]];
-        for (const b of ["#bOn", "#bEdit", "#bDel"]) $(b).disabled = !sel;
-        $("#bOn").classList.toggle("on", !!sel && S.fx[sel.id].on);
       }
+      // the screen changed shape (or the tab just showed): the rows may change
+      new ResizeObserver(() => S.view === "board" && boardRows() !== +$("#bGrid").style.getPropertyValue("--rows") && boardFace()).observe($("#bWrap"));
       const bOpen = (i) => {
         const p = FXI[S.slots[i]];
         S.sel[p.kind] = ofKind(p.kind).indexOf(p);
         save();
         showView(p.kind);
       };
-      // a tap (or Enter / Space): the speaker opens the mixer, an empty square the picker, a unit is chosen, then edited
+      function bToggle(i) {
+        const id = S.slots[i],
+          s = S.fx[id];
+        s.on = !s.on;
+        save();
+        applyFx(id);
+        boardFace();
+        toast(FXI[id].name + (s.on ? " on" : " off") + (s.on && !A.ctx ? " · tap the mic to listen" : ""));
+      }
+      // a tap (or Enter / Space): the speaker opens the mixer, an empty square the picker, a unit goes on or off
       $("#bGrid").addEventListener("click", (e) => {
         const sq = e.target.closest(".sq");
         if (!sq || B.dragged) return;
         const i = +sq.dataset.i;
-        if (i === 15) return showView("mix");
+        if (sq.classList.contains("spk")) return showView("mix");
         if (!S.slots[i]) return pickOpen(i);
-        if (B.sel === i) return bOpen(i);
-        B.sel = i;
-        boardFace();
-        toast(FXI[S.slots[i]].name + ": tap again to edit it, or drag it to another square");
+        // a second tap on the same unit (within 0.35 s) opens it: the first one turned it on or off, so this one puts it back
+        const now = performance.now();
+        if (B.last && B.last.i === i && now - B.last.t < 350) {
+          B.last = null;
+          bToggle(i);
+          return bOpen(i);
+        }
+        B.last = { i, t: now };
+        bToggle(i);
       });
-      // drag a unit onto another square: they swap (or it moves, if that square is empty)
+      // drag a unit onto another square: they swap (or it moves, if that square is empty). Held still: it opens.
       $("#bGrid").addEventListener("pointerdown", (e) => {
         const sq = e.target.closest(".sq.unit-in");
         B.dragged = false;
+        clearTimeout(B.hold);
         if (!sq) return;
         B.drag = { sq, i: +sq.dataset.i, x: e.clientX, y: e.clientY, moved: false };
+        B.hold = setTimeout(() => {
+          if (!B.drag || B.drag.moved) return;
+          B.dragged = true; // the click that follows a long press is not a tap
+          const i = B.drag.i;
+          B.drag = null;
+          if (navigator.vibrate) navigator.vibrate(15);
+          bOpen(i);
+        }, 480);
       });
+      $("#bGrid").addEventListener("contextmenu", (e) => e.preventDefault()); // a long press must not open the browser's menu
       const dropAt = (x, y) => {
         const t = document.elementFromPoint(x, y)?.closest(".sq");
-        return t && +t.dataset.i < 15 ? t : null;
+        return t && !t.classList.contains("spk") ? t : null;
       };
       $("#bGrid").addEventListener("pointermove", (e) => {
         const d = B.drag;
@@ -2150,6 +2200,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         const dx = e.clientX - d.x,
           dy = e.clientY - d.y;
         if (!d.moved && Math.hypot(dx, dy) < 10) return;
+        clearTimeout(B.hold);
         if (!d.moved) $("#bGrid").setPointerCapture(e.pointerId); // only now: a plain tap must still click its square
         d.moved = true;
         d.sq.classList.add("lift");
@@ -2159,6 +2210,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         if (t && t !== d.sq) t.classList.add("drop");
       });
       const dragDone = (e, cancel) => {
+        clearTimeout(B.hold);
         const d = B.drag;
         B.drag = null;
         if (!d?.moved) return;
@@ -2167,7 +2219,6 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
           j = t ? +t.dataset.i : -1;
         if (j >= 0 && j !== d.i) {
           [S.slots[d.i], S.slots[j]] = [S.slots[j], S.slots[d.i]];
-          B.sel = j;
           save();
           rewire();
           toast(FXI[S.slots[j]].name + " moved to square " + (j + 1));
@@ -2176,53 +2227,61 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
       };
       $("#bGrid").addEventListener("pointerup", (e) => dragDone(e));
       $("#bGrid").addEventListener("pointercancel", (e) => dragDone(e, true));
-      $("#bOn").onclick = () => {
-        const id = S.slots[B.sel],
-          s = S.fx[id];
-        s.on = !s.on;
+      // take the shown unit off the board (from the live play tab)
+      $("#pDel").onclick = () => {
+        const p = cur(),
+          i = S.slots.indexOf(p.id);
+        if (i < 0) return;
+        S.slots[i] = "";
+        S.fx[p.id].on = false; // off too, so it does not come back on by surprise when added again
         save();
-        applyFx(id);
-        boardFace();
-        toast(FXI[id].name + (s.on ? " on" : " off"));
-      };
-      $("#bEdit").onclick = () => bOpen(B.sel);
-      $("#bDel").onclick = () => {
-        const id = S.slots[B.sel];
-        S.slots[B.sel] = "";
-        S.fx[id].on = false; // off too, so it does not come back on by surprise when added again
-        B.sel = -1;
-        save();
-        applyFx(id);
+        applyFx(p.id);
         rewire();
-        boardFace();
-        toast(FXI[id].name + " removed from the board");
+        renderUnit();
+        toast(p.name + " taken off the pedal board");
       };
-      // the picker: every unit not on the board yet, by kind
+      // the picker. From a board square: every unit not on the board yet, by kind. From the live play tab (tap the name):
+      // every unit of the kind shown, to choose which one to see.
       let pickAt = -1;
       function pickOpen(i) {
         pickAt = i;
-        $("#pickT").textContent = "Add to square " + (i + 1);
-        $("#pickL").innerHTML = Object.entries(KINDS)
-          .map(([k, t]) => {
-            const free = ofKind(k).filter((p) => !S.slots.includes(p.id));
-            return `<h3>${t}</h3>` + (free.length ? `<div class="pl">${free.map((p) => `<button data-id="${p.id}" style="--pc:${kindCol(p)}" title="Add ${esc(p.name)} here">${esc(p.name)}</button>`).join("")}</div>` : `<div class="hint">All on the board already.</div>`);
-          })
-          .join("");
+        if (i < 0) {
+          $("#pickT").textContent = "Choose a " + KINDS[S.kind].slice(0, -1).toLowerCase();
+          $("#pickL").innerHTML = `<div class="pl">${ofKind(S.kind)
+            .map((p) => `<button data-id="${p.id}" class="${p.id === cur().id ? "on" : ""}" style="--pc:${kindCol(p)}" title="Show ${esc(p.name)}">${esc(p.name)}${S.slots.includes(p.id) ? " <b>●</b>" : ""}</button>`)
+            .join("")}</div><div class="hint">● is on the pedal board.</div>`;
+        } else {
+          $("#pickT").textContent = "Add to square " + (i + 1);
+          $("#pickL").innerHTML = Object.entries(KINDS)
+            .map(([k, t]) => {
+              const free = ofKind(k).filter((p) => !S.slots.includes(p.id));
+              return `<h3>${t}</h3>` + (free.length ? `<div class="pl">${free.map((p) => `<button data-id="${p.id}" style="--pc:${kindCol(p)}" title="Add ${esc(p.name)} here">${esc(p.name)}</button>`).join("")}</div>` : `<div class="hint">All of them are on the board.</div>`);
+            })
+            .join("");
+        }
         $("#pick").hidden = false;
       }
+      $("#pName").onclick = () => pickOpen(-1);
+      $("#pName").onkeydown = (e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), pickOpen(-1));
       $("#pickL").onclick = (e) => {
         const b = e.target.closest("[data-id]");
         if (!b) return;
         const id = b.dataset.id;
+        if (pickAt < 0) {
+          S.sel[S.kind] = ofKind(S.kind).findIndex((p) => p.id === id);
+          save();
+          renderUnit();
+          $("#pick").hidden = true;
+          return;
+        }
         S.slots[pickAt] = id;
         S.fx[id].on = true;
-        B.sel = pickAt;
         save();
         rewire();
         applyFx(id);
         $("#pick").hidden = true;
         boardFace();
-        toast(FXI[id].name + " added and on: tap it again to edit");
+        toast(FXI[id].name + " added and on: tap it to turn it off, press and hold to open it");
       };
       $("#pickClose").onclick = () => ($("#pick").hidden = true);
 
@@ -3236,7 +3295,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
       function ltHintFace() {
         $("#ltHint").textContent = A.mic
           ? "Press START, then pick a string (muted notes work best) each time the ball crosses the middle line and the click sounds. Play along with what you hear, not with what you see."
-          : "Tap RECORD first: the test listens to your instrument.";
+          : "Tap the mic first: the test listens to your instrument.";
       }
       function ltOpen() {
         $("#lt").hidden = false;
@@ -3245,7 +3304,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         ltDraw(null);
       }
       function ltStart() {
-        if (!A.mic) return toast("Tap RECORD first: the test listens to your instrument", 2600);
+        if (!A.mic) return toast("Tap the mic first: the test listens to your instrument", 2600);
         if (!A.onset) return toast("This browser cannot run the test (no AudioWorklet)", 2600);
         ltStop();
         const c = A.ctx;
@@ -3363,7 +3422,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
               "- **Knobs**: drag up to turn them up, down to turn them down. With a keyboard, the arrow keys.",
               "- The **footswitch** turns the pedal on or off; the red light shows it is on. A unit that is off lets the sound through untouched.",
               "- **Dynamics**: NOISE GATE (silences the hiss between notes), COMPRESSOR (evens out your picking). **Drives**: BOOST, OVERDRIVE (smooth, mid-heavy), DISTORTION (hard, its FILTER darkens it), FUZZ. **Filters**: AUTO-WAH (sweeps with how hard you pick), EQ-5. **Modulation**: CHORUS, FLANGER, PHASER, TREMOLO, VIBRATO. **Space**: DELAY, PLATE REVERB, ROOM REVERB.",
-              "- Switching on a pedal that is not on the **BOARD** puts it in the first empty square. The board sets the order the sound goes through.",
+              "- Switching on a pedal that is not on the **PEDAL BOARD** puts it in the first empty square. The board sets the order the sound goes through.",
               "- Your knobs and switches are kept on this device.",
             ],
             es: [
@@ -3398,22 +3457,22 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
           t: { en: "BOARD and the test riff", es: "BOARD y el riff de prueba" },
           b: {
             en: [
-              "The squares icon at the top opens the **BOARD**: the order your sound goes through. It comes in at the top right and runs right to left, down, left to right, down... along the cable to the **speaker** at the bottom right.",
+                            "The squares icon at the top opens the **PEDAL BOARD**: the order your sound goes through. It comes in at the top right and runs right to left, down, left to right, down... along the cable to the **speaker** at the end. The board fills the screen with squares: the more room, the more rows (up to 27 units).",
               "- Tap an **empty square** (+) to add a pedal, amp or cab there; it comes in switched on.",
-              "- Tap a unit to choose it (it gets a frame); tap it again to open it and turn its knobs.",
+              "- Tap a unit to turn it **on or off** (a dimmed unit is off). **Press and hold** it, or **double tap**, to open it full screen in LIVE PLAY.",
               "- **Drag** a unit onto another square to swap them, or onto an empty one to move it. A drive before the amp and the delay and reverb after the cab is the classic order, but try anything.",
-              "- **ON/OFF**, **EDIT** and **REMOVE** act on the chosen unit. A unit that is off lets the sound through untouched; one that is not on the board is not in the sound at all.",
-              "- **RIFF ▶** plays a looped test riff (a guitar straight into the interface, made by the app) through the board, so you can try sounds without playing. Tap it again to stop. It works with or without RECORD.",
+              "- To take a unit off the board, open it in LIVE PLAY and tap **✕**. A unit that is off lets the sound through untouched; one that is not on the board is not in the sound at all.",
               "- The **speaker** opens the MIXER.",
+              "- The pedal icon opens **LIVE PLAY**: one unit full screen. Tap its **name** for the list of that kind, **◁ ▷** to step through, **CABS, AMPS, PEDALS** to change kind. **RIFF ▶** (bottom left) plays a looped test riff (a guitar straight into the interface, made by the app) through the rig, so you can try sounds without playing. It works with or without the mic.",
             ],
             es: [
-              "El icono de cuadrados de arriba abre el **BOARD**: el orden por el que pasa tu sonido. Entra arriba a la derecha y va de derecha a izquierda, baja, de izquierda a derecha, baja... siguiendo el cable hasta el **altavoz** abajo a la derecha.",
+                            "El icono de cuadrados de arriba abre el **PEDAL BOARD**: el orden por el que pasa tu sonido. Entra arriba a la derecha y va de derecha a izquierda, baja, de izquierda a derecha, baja... siguiendo el cable hasta el **altavoz** al final. El board llena la pantalla de casillas: cuanto más espacio, más filas (hasta 27 unidades).",
               "- Toca una **casilla vacía** (+) para poner ahí un pedal, amplificador o pantalla; entra encendido.",
-              "- Toca una unidad para elegirla (se enmarca); tócala otra vez para abrirla y mover sus potenciómetros.",
+              "- Toca una unidad para **encenderla o apagarla** (una atenuada está apagada). **Mantén pulsado** o **toca dos veces** para abrirla a pantalla completa en LIVE PLAY.",
               "- **Arrastra** una unidad a otra casilla para intercambiarlas, o a una vacía para moverla. Lo clásico es la saturación antes del amplificador y el delay y la reverb después de la pantalla, pero prueba lo que quieras.",
-              "- **ON/OFF**, **EDIT** y **REMOVE** actúan sobre la unidad elegida. Una unidad apagada deja pasar el sonido sin tocarlo; una que no está en el board no está en el sonido.",
-              "- **RIFF ▶** toca en bucle un riff de prueba (una guitarra directa a la interfaz, generada por la app) a través del board, para probar sonidos sin tocar. Tócalo otra vez para parar. Funciona con o sin RECORD.",
+              "- Para quitar una unidad del board, ábrela en LIVE PLAY y toca **✕**. Una unidad apagada deja pasar el sonido sin tocarlo; una que no está en el board no está en el sonido.",
               "- El **altavoz** abre el MIXER.",
+              "- El icono del pedal abre **LIVE PLAY**: una unidad a pantalla completa. Toca su **nombre** para ver la lista de ese tipo, **◁ ▷** para pasar de una a otra, **CABS, AMPS, PEDALS** para cambiar de tipo. **RIFF ▶** (abajo a la izquierda) toca en bucle un riff de prueba (una guitarra directa a la interfaz, generada por la app) a través del equipo, para probar sonidos sin tocar. Funciona con o sin el micrófono.",
             ],
           },
         },
@@ -3483,10 +3542,10 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         },
         {
           id: "listen",
-          t: { en: "RECORD: listening", es: "RECORD: escuchar" },
+          t: { en: "The mic: listening", es: "El micrófono: escuchar" },
           b: {
             en: [
-              "**RECORD** (the microphone, bottom left) starts listening: your instrument goes through the rig to your headphones. Tap it again to stop (that also stops the loops and tracks). To record loops, use the LOOPER.",
+              "The **microphone** icon at the top starts listening: your instrument goes through the rig to your headphones. Tap it again to stop (that also stops the loops and tracks). To record loops, use the LOOPER.",
               "- Plug the guitar into an audio interface, or a guitar cable for phones, and choose it in **OPTIONS** (Files tab).",
               "- **Use headphones** or the interface's output: with the phone's own microphone and speaker the sound feeds back.",
               "- The thin bar under the top icons shows the input level; it turns red when it clips. Set the level with **GAIN** in OPTIONS.",
@@ -3494,7 +3553,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
               "- The app stops listening when it goes to the background.",
             ],
             es: [
-              "**RECORD** (el micrófono, abajo a la izquierda) empieza a escuchar: tu instrumento pasa por el equipo hasta tus auriculares. Tócalo otra vez para parar (también para los loops y las pistas). Para grabar loops, usa el LOOPER.",
+              "El icono del **micrófono** de arriba empieza a escuchar: tu instrumento pasa por el equipo hasta tus auriculares. Tócalo otra vez para parar (también para los loops y las pistas). Para grabar loops, usa el LOOPER.",
               "- Conecta la guitarra a una interfaz de audio, o a un cable de guitarra para móvil, y elígela en **OPTIONS** (pestaña Archivos).",
               "- **Usa auriculares** o la salida de la interfaz: con el micrófono y el altavoz del móvil el sonido se acopla.",
               "- La barra fina bajo los iconos de arriba muestra el nivel de entrada; se pone roja cuando satura. Ajusta el nivel con **GAIN** en OPTIONS.",
