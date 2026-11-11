@@ -367,7 +367,8 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
       html[data-theme="light"] { --acc: #e07b00; --brand: #e07b00; --ink: #ffffff; --playbg: #fde3c0; --playbg2: #fcd6a4; }
       header .hv { width: 44px; height: 44px; min-height: 0; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 6px; flex: none; }
       header #listen { margin-left: auto; }
-      header #listen.on { background: var(--hot); border-color: var(--hot); color: #fff; }
+      header #listen.on, #vTabs .listenBtn.on { background: var(--hot); border-color: var(--hot); color: #fff; }
+      #vTabs .listenBtn.on i { color: #fff; }
       header .hv + .hv { margin-left: 2px; }
       header .hv.on { background: var(--acc); border-color: var(--acc); color: var(--ink); }
       body.pocket header { position: relative; }
@@ -384,13 +385,20 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
       #pSel b small { font: 700 10px system-ui, sans-serif; color: var(--dim); letter-spacing: 1px; text-transform: uppercase; }
       /* the unit is drawn at one size and zoomed to fill the room between the description and the waveform */
       #unit { transform-origin: center; }
+      /* in words, where the sound comes from and where it goes, over the cable on each side of the unit (it flows from right to left) */
+      .cl { position: absolute; bottom: calc(50% + 8px); width: 54px; font: 800 9px/1.15 var(--mono); letter-spacing: 0.4px; color: var(--dim); text-align: center; pointer-events: none; overflow-wrap: anywhere; }
+      .cl b { display: block; color: var(--text); font-weight: 900; }
+      .cl i { position: absolute; top: calc(100% + 14px); left: 0; right: 0; font-style: normal; font-size: 12px; color: var(--acc); }
+      .cr { right: 0; }
+      .cx { left: 0; }
       #pInfo { display: flex; align-items: center; gap: 8px; margin: 6px 6px 0; flex: none; min-height: 40px; }
       #pDesc { flex: 1; font-size: 13px; line-height: 1.3; color: var(--dim); }
-      #pDel { flex: none; height: 36px; padding: 0 10px; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; }
-      #pDel[hidden] { display: none; }
+      #pBoard { flex: none; height: 36px; padding: 0 10px; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; border-width: 2px; }
+      #pBoard.out { border-color: var(--hot); }
+      #pBoard.in { border-color: var(--acc); }
       #pWave { display: block; flex: none; width: calc(100% - 12px); height: 88px; margin: 0 6px 6px; border: 1px solid var(--line); border-radius: 8px; background: var(--wave, var(--panel)); }
       #iosWarn { margin: 6px 6px 0; border-color: var(--hot); color: var(--text); flex: none; }
-      #stage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; position: relative; padding: 10px 0; touch-action: pan-y; }
+      #stage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; position: relative; padding: 12px 0; touch-action: pan-y; }
       #stage::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 8px; margin-top: -4px; background: var(--line); }
       /* a unit: a pedal (box, jacks, footswitch), an amp head or a cab. Knobs flow in rows. */
       .unit { --pc: #2fb36b; --ks: 64px; position: relative; z-index: 1; border-radius: 14px; color: #111; display: flex; flex-direction: column; }
@@ -401,8 +409,12 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
       .unit:not(.off) .led { background: #ff2a2a; box-shadow: 0 0 10px 3px rgba(255, 40, 40, 0.7); }
       .unit .fs { width: 76px; height: 76px; min-height: 0; border-radius: 50%; padding: 0; background: radial-gradient(circle at 40% 35%, #eee, #888 60%, #555); border: 3px solid #333; box-shadow: 0 4px 0 #222; }
       .unit .fs::after { content: ""; display: block; width: 34px; height: 34px; margin: auto; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #fff, #999); border: 2px solid #444; }
+      .unit .tst { width: 42px; height: 42px; min-height: 0; flex: none; border-radius: 50%; padding: 0; background: radial-gradient(circle at 40% 35%, #eee, #888 60%, #555); border: 3px solid #333; box-shadow: 0 3px 0 #222; font: 900 9px var(--mono); letter-spacing: 0.5px; color: #1c1c1c; }
+      .unit .tst:active { transform: translateY(2px); box-shadow: 0 1px 0 #222; }
+      .unit .tst.on { background: radial-gradient(circle at 40% 35%, #fff, #bbb 60%, #777); border-color: var(--acc); box-shadow: 0 0 0 2px var(--acc), 0 0 10px var(--acc); }
+      .unit.pedal .tst { position: absolute; left: 18px; bottom: 76px; }
       .unit .fs:active { transform: translateY(3px); box-shadow: 0 1px 0 #222; }
-      .unit.pedal { width: 250px; height: 400px; background: linear-gradient(160deg, color-mix(in srgb, var(--pc) 88%, #fff) 0%, var(--pc) 45%, color-mix(in srgb, var(--pc) 70%, #000) 100%); box-shadow: 0 10px 0 color-mix(in srgb, var(--pc) 45%, #000), 0 18px 30px rgba(0, 0, 0, 0.45); padding: 16px 8px 0; }
+      .unit.pedal { width: 250px; min-height: 400px; background: linear-gradient(160deg, color-mix(in srgb, var(--pc) 88%, #fff) 0%, var(--pc) 45%, color-mix(in srgb, var(--pc) 70%, #000) 100%); box-shadow: 0 10px 0 color-mix(in srgb, var(--pc) 45%, #000), 0 18px 30px rgba(0, 0, 0, 0.45); padding: 16px 8px 0; }
       .unit.pedal .kn { flex: 0 1 auto; }
       .unit.pedal .led { align-self: center; margin: auto 0 8px; }
       .unit.pedal .fs { align-self: center; margin-bottom: 10px; }
@@ -424,7 +436,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
       .unit.amp .fs::after { width: 18px; height: 18px; }
       .unit.amp .grill { height: 34px; margin-top: 10px; border-radius: 4px; background: repeating-linear-gradient(45deg, #3a332b 0 3px, #2a241f 3px 6px); }
       /* cab: a box with a speaker; its knobs sit on a strip at the top */
-      .unit.cab { --ks: 52px; width: 280px; padding: 10px; background: #1b1714; border: 3px solid #0c0a08; box-shadow: 0 14px 30px rgba(0, 0, 0, 0.5); }
+      .unit.cab { --ks: 50px; width: 220px; padding: 10px; background: #1b1714; border: 3px solid #0c0a08; box-shadow: 0 14px 30px rgba(0, 0, 0, 0.5); }
       .unit.cab .strip { display: flex; align-items: center; gap: 8px; padding: 6px; border-radius: 6px; background: linear-gradient(#d8c08a, #b49a62); }
       .unit.cab .kn { flex: 1; flex-wrap: wrap; justify-content: center; }
       .unit.cab .fs { width: 44px; height: 44px; border-width: 2px; }
@@ -580,7 +592,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         ><span class="sub">Pocket</span>
       </button>
       <div id="lvl" title="Input level"><i></i></div>
-      <button class="hv" id="listen" title="Start listening: your instrument plays through the rig. Tap again to stop.">
+      <button class="hv listenBtn" id="listen" title="Start listening: your instrument plays through the rig. Tap again to stop.">
         <svg class="ic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>
       </button>
       <button class="hv on" id="hLive" data-v="live" title="Live play: one pedal, amp or cab full screen, to play with its knobs">
@@ -612,8 +624,8 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
           <button id="pNext" title="Next one" aria-label="Next">▷</button>
         </div>
         <div class="card hint" id="iosWarn" role="note" hidden></div>
-        <div id="pInfo"><span id="pDesc"></span><button id="pDel" title="Take this unit off the pedal board: it stops being part of the sound. It stays in the list and can be added again" hidden>TAKE OFF BOARD</button></div>
-        <div id="stage"><div class="unit" id="unit"></div></div>
+        <div id="pInfo"><span id="pDesc"></span><button id="pBoard"></button></div>
+        <div id="stage"><span class="cl cr" id="cFrom"></span><span class="cl cx" id="cTo"></span><div class="unit" id="unit"></div></div>
         <canvas id="pWave" title="What this unit does to the sound: the grey line is what goes in, the coloured line is what comes out"></canvas>
       </section>
       <!-- PEDAL BOARD: tap an empty square to add a unit, tap a unit to turn it on or off, press and hold (or double tap) to open it, drag to move it -->
@@ -731,7 +743,9 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
     </main>
 
     <div class="prow" id="vTabs">
-      <button class="riffBtn" title="Play a test riff through the rig (a looped guitar riff made in the app). Tap again to stop."><i>TEST</i>RIFF ▶</button>
+      <button class="listenBtn" id="listen2" title="Start listening: your instrument plays through the rig. Tap again to stop.">
+        <svg class="ic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg><i>LISTEN</i>RECORD
+      </button>
       <button data-v="cab" title="Speaker cabinets"><i>SPEAKER</i>CABS</button>
       <button data-v="amp" title="Amplifiers"><i>MODEL</i>AMPS</button>
       <button data-v="pedal" class="on" title="Your pedals"><i>EFFECTS</i>PEDALS</button>
@@ -1171,34 +1185,33 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
       const FX = [...PEDALS, ...AMPS, ...CABS];
       const FXI = Object.fromEntries(FX.map((p) => [p.id, p]));
       const KINDS = { pedal: "PEDALS", amp: "AMPS", cab: "CABS" };
-      // a line about each unit, shown under the selector in live play: [English, Spanish]
+      // a line about each unit, shown under the selector in live play (the interface is in English; the manual has both languages)
       const UDESC = {
-        gate: ["Silences the hiss between notes: what stays below THRESHOLD is cut off, and RELEASE sets how fast it fades.", "Silencia el siseo entre notas: lo que queda bajo THRESHOLD se corta, y RELEASE fija lo rápido que se apaga."],
-        comp: ["Evens out your picking: loud notes come down and quiet ones come up, so the sound is steadier and sustains longer.", "Iguala tu pulsación: las notas fuertes bajan y las suaves suben, así el sonido es más estable y dura más."],
-        boost: ["A clean volume lift: it pushes the next pedal or the amp harder, or makes you louder in a solo.", "Un empujón limpio de volumen: hace trabajar más al siguiente pedal o al ampli, o te sube en un solo."],
-        od: ["A smooth, mid-heavy drive: it breaks up like a tube amp pushed a little.", "Una saturación suave y de medios: se rompe como un ampli de válvulas empujado un poco."],
-        dist: ["A hard, tight distortion for rock and metal. FILTER darkens it.", "Una distorsión dura y apretada para rock y metal. FILTER la oscurece."],
-        fuzz: ["A thick, torn-up fuzz: the signal is squashed and clipped almost to a square wave.", "Un fuzz grueso y rasgado: la señal se aplasta y se recorta casi hasta una onda cuadrada."],
-        wah: ["A wah that follows how hard you play: dig in and it opens, ease off and it closes.", "Un wah que sigue lo fuerte que tocas: si pulsas fuerte se abre, si sueltas se cierra."],
-        eq: ["Five bands from low to high, up to 12 dB each way: shape the tone, cut the mud, lift the sparkle.", "Cinco bandas de graves a agudos, hasta 12 dB arriba o abajo: da forma al tono, quita lo embarrado y sube el brillo."],
-        cho: ["Doubles the sound with a slowly wobbling copy: shimmer and width.", "Dobla el sonido con una copia que oscila despacio: brillo y anchura."],
-        fla: ["A very short, swept delay mixed with the dry sound: a jet-plane whoosh.", "Un retardo muy corto que barre, mezclado con el sonido seco: un silbido de reactor."],
-        pha: ["Sweeps notches through the sound: a swirling, watery movement.", "Barre muescas por el sonido: un movimiento envolvente, como de agua."],
-        trem: ["Wobbles the volume up and down at a steady rate.", "Sube y baja el volumen a un ritmo constante."],
-        vib: ["Wobbles the pitch up and down: seasick and vintage.", "Sube y baja el tono: mareante y vintage."],
-        dly: ["Repeats your notes after a short time, fading away. TIME, REPEATS and MIX shape the echoes.", "Repite tus notas tras un momento, y se van apagando. TIME, REPEATS y MIX dan forma a los ecos."],
-        rev: ["A plate reverb: a smooth, bright wash of reflections behind every note.", "Una reverb de plancha: una nube suave y brillante de reflejos detrás de cada nota."],
-        room: ["A small-room reverb: a short, natural ambience that stays close to the dry sound.", "Una reverb de sala pequeña: un ambiente corto y natural, pegado al sonido seco."],
-        amp: ["A crunch amp: clean at low GAIN, breaking up as you turn it up. Put a cab after it.", "Un ampli crunch: limpio con poca ganancia, se rompe al subirla. Pon una pantalla detrás."],
-        clean: ["A clean, sparkling amp with lots of headroom: let the pedals bring the dirt. Put a cab after it.", "Un ampli limpio y brillante con mucho margen: que la suciedad la pongan los pedales. Pon una pantalla detrás."],
-        chime: ["A bright, chiming amp that rings out and breaks up gently. Put a cab after it.", "Un ampli brillante y campanilleante que suena largo y se rompe con suavidad. Pon una pantalla detrás."],
-        lead: ["A high-gain amp for solos and heavy riffs: thick, compressed, very saturated. Put a cab after it.", "Un ampli de mucha ganancia para solos y riffs pesados: grueso, comprimido y muy saturado. Pon una pantalla detrás."],
-        cab: ["A 1×12 open-back cab: airy and a little boxy, good with clean and crunch sounds.", "Una pantalla 1×12 abierta: aireada y algo cajonera, buena para limpio y crunch."],
-        c210: ["A small 1×10 tweed-style cab: warm and tight in the low end, with a vintage bite.", "Una pantalla pequeña 1×10 estilo tweed: cálida y apretada en graves, con mordiente vintage."],
-        c212: ["A 2×12 closed-back cab: full and focused, with a notch in the upper mids.", "Una pantalla 2×12 cerrada: llena y enfocada, con una muesca en los medios agudos."],
-        c412: ["A 4×12 British stack: a big, tight low end and a strong upper-mid push, for heavy tones.", "Una pantalla 4×12 británica: graves grandes y apretados y un empuje fuerte en los medios agudos, para tonos pesados."],
+        gate: "Silences the hiss between notes: what stays below THRESHOLD is cut off, and RELEASE sets how fast it fades.",
+        comp: "Evens out your picking: loud notes come down and quiet ones come up, so the sound is steadier and sustains longer.",
+        boost: "A clean volume lift: it pushes the next pedal or the amp harder, or makes you louder in a solo.",
+        od: "A smooth, mid-heavy drive: it breaks up like a tube amp pushed a little.",
+        dist: "A hard, tight distortion for rock and metal. FILTER darkens it.",
+        fuzz: "A thick, torn-up fuzz: the signal is squashed and clipped almost to a square wave.",
+        wah: "A wah that follows how hard you play: dig in and it opens, ease off and it closes.",
+        eq: "Five bands from low to high, up to 12 dB each way: shape the tone, cut the mud, lift the sparkle.",
+        cho: "Doubles the sound with a slowly wobbling copy: shimmer and width.",
+        fla: "A very short, swept delay mixed with the dry sound: a jet-plane whoosh.",
+        pha: "Sweeps notches through the sound: a swirling, watery movement.",
+        trem: "Wobbles the volume up and down at a steady rate.",
+        vib: "Wobbles the pitch up and down: seasick and vintage.",
+        dly: "Repeats your notes after a short time, fading away. TIME, REPEATS and MIX shape the echoes.",
+        rev: "A plate reverb: a smooth, bright wash of reflections behind every note.",
+        room: "A small-room reverb: a short, natural ambience that stays close to the dry sound.",
+        amp: "A crunch amp: clean at low GAIN, breaking up as you turn it up. Put a cab after it.",
+        clean: "A clean, sparkling amp with lots of headroom: let the pedals bring the dirt. Put a cab after it.",
+        chime: "A bright, chiming amp that rings out and breaks up gently. Put a cab after it.",
+        lead: "A high-gain amp for solos and heavy riffs: thick, compressed, very saturated. Put a cab after it.",
+        cab: "A 1×12 open-back cab: airy and a little boxy, good with clean and crunch sounds.",
+        c210: "A small 1×10 tweed-style cab: warm and tight in the low end, with a vintage bite.",
+        c212: "A 2×12 closed-back cab: full and focused, with a notch in the upper mids.",
+        c412: "A 4×12 British stack: a big, tight low end and a strong upper-mid push, for heavy tones.",
       };
-      const descLang = () => localStorage.getItem("play.lang") || ((navigator.language || "en").toLowerCase().startsWith("es") ? "es" : "en");
       const ofKind = (k) => FX.filter((p) => p.kind === k);
       const fxDefaults = () => Object.fromEntries(FX.map((p) => [p.id, Object.fromEntries([["on", false], ...p.knobs.map((k) => [k[0], k[4]])])]));
       // saved and imported boards are untrusted: keep only known units and knobs, clamp every value
@@ -1609,7 +1622,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
           if (AIN.dev && set.deviceId && set.deviceId !== AIN.dev) toast("The browser opened another input than the one you chose", 3200);
           else if (!isIOS) toast("Listening · use headphones");
         }
-        $("#listen").classList.toggle("on", mic);
+        $$(".listenBtn").forEach((b) => b.classList.toggle("on", mic));
         ainList();
         statsFace();
         meterLoop();
@@ -1691,7 +1704,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         A.ctx?.close().catch(() => {});
         cancelAnimationFrame(A.raf);
         Object.assign(A, { ctx: null, stream: null, nodes: null, meter: null, gain: null, track: null, onset: null, mic: false, tap: null });
-        $("#listen").classList.remove("on");
+        $$(".listenBtn").forEach((b) => b.classList.remove("on"));
         $("#lvl i").style.width = "0";
         statsFace();
         mixMeters();
@@ -1716,7 +1729,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         if (KINDS[S.view]) wavDraw();
         A.raf = requestAnimationFrame(meterLoop);
       }
-      $("#listen").onclick = () => (A.mic ? (engineStop(), toast("Stopped listening")) : listenStart());
+      $$(".listenBtn").forEach((b) => (b.onclick = () => (A.mic ? (engineStop(), toast("Stopped listening")) : listenStart())));
       // the app stops in the background (and so does not come back with a stuck input after sleep)
       document.addEventListener("visibilitychange", () => {
         if (document.hidden && A.ctx) engineStop();
@@ -1820,10 +1833,26 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
           st = $("#stage");
         if (!st.clientWidth || !el.offsetWidth) return;
         el.style.zoom = 1;
-        const z = Math.min((st.clientWidth - 28) / el.offsetWidth, (st.clientHeight - 24) / el.offsetHeight, 2);
+        const z = Math.min((st.clientWidth - 112) / el.offsetWidth, (st.clientHeight - 34) / el.offsetHeight, 2);
         el.style.zoom = Math.max(0.6, z).toFixed(3);
       }
       new ResizeObserver(unitFit).observe($("#stage"));
+      // the unit before and after this one in the signal order: the guitar and the speaker are the two ends
+      function cableWords(p) {
+        const i = S.slots.indexOf(p.id),
+          name = (id) => FXI[id].name;
+        let from = "GUITAR",
+          to = "SPEAKER";
+        if (i < 0) from = to = "";
+        else {
+          const before = S.slots.slice(0, i).filter(Boolean),
+            after = S.slots.slice(i + 1).filter(Boolean);
+          if (before.length) from = name(before[before.length - 1]);
+          if (after.length) to = name(after[0]);
+        }
+        $("#cFrom").innerHTML = from ? `FROM<b>${esc(from)}</b><i>◁</i>` : `NOT ON<b>BOARD</b>`;
+        $("#cTo").innerHTML = to ? `TO<b>${esc(to)}</b><i>◁</i>` : `NOT ON<b>BOARD</b>`;
+      }
       // the waveform banner: what goes into the shown unit (grey) and what comes out (coloured), read from two analysers on its jacks
       function wavUntap() {
         const t = A.tap;
@@ -1910,21 +1939,27 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
           el = $("#unit");
         $("#pName").innerHTML = `<small>${KINDS[S.kind].slice(0, -1)} ${S.sel[S.kind] + 1}/${list.length}</small>${esc(p.name)}`;
         $("#pPrev").disabled = $("#pNext").disabled = list.length < 2;
-        $("#pDel").hidden = !S.slots.includes(p.id);
-        $("#pDesc").textContent = (UDESC[p.id] || ["", ""])[descLang() === "es" ? 1 : 0];
+        const on = S.slots.includes(p.id);
+        $("#pBoard").textContent = on ? "TAKE OFF BOARD" : "ADD TO BOARD";
+        $("#pBoard").className = on ? "out" : "in";
+        $("#pBoard").title = on ? "Take this unit off the pedal board: it stops being part of the sound. It stays in the list and can be added again" : "Put this unit on the pedal board, in the first empty square, switched on";
+        $("#pDesc").textContent = UDESC[p.id] || "";
+        cableWords(p);
         el.className = "unit " + p.kind + (s.on ? "" : " off");
         el.style.setProperty("--pc", p.col || "#888");
         const kn = p.knobs
           .map((k, i) => `<div class="knob" data-k="${i}" role="slider" tabindex="0" aria-label="${esc(k[1])}" aria-valuemin="${k[2]}" aria-valuemax="${k[3]}" title="${esc(k[1])}: drag up or down"><i></i><b>${esc(k[1])}</b><small></small></div>`)
           .join("");
+        const tst = `<button class="tst riffBtn" title="Play a looped test riff through the rig, to try sounds without playing. Tap again to stop." aria-label="Test riff">TEST</button>`;
         const sw = (t) => `<button class="fs" id="fs" title="${t}" aria-label="${t}" aria-pressed="${s.on}"></button>`;
         if (p.kind === "pedal")
           el.innerHTML = `<span class="jack out"></span><span class="jl out">◁ OUT</span><span class="jack in"></span><span class="jl in">IN ◁</span>
-            <div class="kn">${kn}</div><span class="led"></span>${sw("Footswitch: the pedal on or off")}<div class="plate">${esc(p.name)}</div>`;
+            <div class="kn">${kn}</div>${tst}<span class="led"></span>${sw("Footswitch: the pedal on or off")}<div class="plate">${esc(p.name)}</div>`;
         else if (p.kind === "amp")
-          el.innerHTML = `<div class="top"><div class="plate">${esc(p.name)}</div><span class="led"></span>${sw("Power: the amp on or off")}</div><div class="panel"><div class="kn">${kn}</div></div><div class="grill"></div>`;
-        else el.innerHTML = `<div class="strip"><div class="kn">${kn}</div><span class="led"></span>${sw("The cab on or off")}</div><div class="spk"></div><div class="plate">${esc(p.name)}</div>`;
+          el.innerHTML = `<div class="top"><div class="plate">${esc(p.name)}</div><span class="led"></span>${tst}${sw("Power: the amp on or off")}</div><div class="panel"><div class="kn">${kn}</div></div><div class="grill"></div>`;
+        else el.innerHTML = `<div class="strip"><div class="kn">${kn}</div><span class="led"></span>${tst}${sw("The cab on or off")}</div><div class="spk"></div><div class="plate">${esc(p.name)}</div>`;
         $$("#unit .knob").forEach(knobFace);
+        riffFace();
         unitFit();
         wavDraw();
       }
@@ -1966,6 +2001,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         setKnob(el, S.fx[cur().id][k[0]] + (st * (k[3] - k[2])) / 20, true);
       });
       $("#unit").addEventListener("click", (e) => {
+        if (e.target.closest(".tst")) return riffToggle();
         if (!e.target.closest("#fs")) return;
         const p = cur(),
           s = S.fx[p.id];
@@ -2356,10 +2392,20 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
       $("#bGrid").addEventListener("pointerup", (e) => dragDone(e));
       $("#bGrid").addEventListener("pointercancel", (e) => dragDone(e, true));
       // take the shown unit off the board (from the live play tab)
-      $("#pDel").onclick = () => {
+      $("#pBoard").onclick = () => {
         const p = cur(),
           i = S.slots.indexOf(p.id);
-        if (i < 0) return;
+        if (i < 0) {
+          const free = S.slots.indexOf("");
+          if (free < 0) return toast("The pedal board is full: take a unit off it first", 2600);
+          S.slots[free] = p.id;
+          S.fx[p.id].on = true;
+          save();
+          rewire();
+          applyFx(p.id);
+          renderUnit();
+          return toast(p.name + " added to the pedal board, square " + (free + 1));
+        }
         S.slots[i] = "";
         S.fx[p.id].on = false; // off too, so it does not come back on by surprise when added again
         save();
@@ -3591,7 +3637,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
               "- **Drag** a unit onto another square to swap them, or onto an empty one to move it. A drive before the amp and the delay and reverb after the cab is the classic order, but try anything.",
               "- To take a unit off the board, open it in LIVE PLAY and tap **TAKE OFF BOARD** (beside its description). A unit that is off lets the sound through untouched; one that is not on the board is not in the sound at all.",
               "- The **speaker** opens the MIXER.",
-              "- The pedal icon opens **LIVE PLAY**: one unit full screen. Tap its **name** for the list of that kind, **◁ ▷** to step through, **CABS, AMPS, PEDALS** to change kind. **RIFF ▶** (bottom left) plays a looped test riff (a guitar straight into the interface, made by the app) through the rig, so you can try sounds without playing. It works with or without the mic. Under the name is a line about what the unit does, and the **waveform** at the bottom shows what goes into it (grey) and what comes out (coloured), with their levels, while you play.",
+              "- The pedal icon opens **LIVE PLAY**: one unit full screen. Tap its **name** for the list of that kind, **◁ ▷** to step through, **CABS, AMPS, PEDALS** to change kind. The metal **TEST** button on the unit plays a looped test riff (a guitar straight into the interface, made by the app) through the rig, so you can try sounds without playing; **RECORD** (bottom left) starts listening to your instrument. On each side of the unit, words say where the sound comes from (the guitar or the unit before) and where it goes (the next unit or the speaker); **ADD TO BOARD** / **TAKE OFF BOARD** puts the unit in the sound or takes it out. It works with or without the mic. Under the name is a line about what the unit does, and the **waveform** at the bottom shows what goes into it (grey) and what comes out (coloured), with their levels, while you play.",
             ],
             es: [
                             "El icono de cuadrados de arriba abre el **PEDAL BOARD**: el orden por el que pasa tu sonido. Entra arriba a la derecha y va de derecha a izquierda, baja, de izquierda a derecha, baja... siguiendo el cable hasta el **altavoz** al final. El board llena la pantalla de casillas: cuanto más espacio, más filas (hasta 27 unidades).",
@@ -3600,7 +3646,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
               "- **Arrastra** una unidad a otra casilla para intercambiarlas, o a una vacía para moverla. Lo clásico es la saturación antes del amplificador y el delay y la reverb después de la pantalla, pero prueba lo que quieras.",
               "- Para quitar una unidad del board, ábrela en LIVE PLAY y toca **TAKE OFF BOARD** (junto a su descripción). Una unidad apagada deja pasar el sonido sin tocarlo; una que no está en el board no está en el sonido.",
               "- El **altavoz** abre el MIXER.",
-              "- El icono del pedal abre **LIVE PLAY**: una unidad a pantalla completa. Toca su **nombre** para ver la lista de ese tipo, **◁ ▷** para pasar de una a otra, **CABS, AMPS, PEDALS** para cambiar de tipo. **RIFF ▶** (abajo a la izquierda) toca en bucle un riff de prueba (una guitarra directa a la interfaz, generada por la app) a través del equipo, para probar sonidos sin tocar. Funciona con o sin el micrófono. Bajo el nombre hay una línea sobre lo que hace la unidad, y la **onda** de abajo muestra lo que entra (gris) y lo que sale (de color), con sus niveles, mientras tocas.",
+              "- El icono del pedal abre **LIVE PLAY**: una unidad a pantalla completa. Toca su **nombre** para ver la lista de ese tipo, **◁ ▷** para pasar de una a otra, **CABS, AMPS, PEDALS** para cambiar de tipo. El botón metálico **TEST** de la unidad toca en bucle un riff de prueba (una guitarra directa a la interfaz, generada por la app) a través del equipo, para probar sonidos sin tocar; **RECORD** (abajo a la izquierda) empieza a escuchar tu instrumento. A cada lado de la unidad, unas palabras dicen de dónde viene el sonido (la guitarra o la unidad anterior) y a dónde va (la siguiente unidad o el altavoz); **ADD TO BOARD** / **TAKE OFF BOARD** pone la unidad en el sonido o la quita. Funciona con o sin el micrófono. Bajo el nombre hay una línea sobre lo que hace la unidad, y la **onda** de abajo muestra lo que entra (gris) y lo que sale (de color), con sus niveles, mientras tocas.",
             ],
           },
         },
