@@ -4,7 +4,7 @@
 
 A pocket guitar rig in one HTML file: plug a guitar into an audio interface or a USB guitar cable, and play it through pedals, amps and cabs laid out on a board, over your own backing tracks and loops, in the browser. The sister app of [TRACK.Pocket](https://github.com/utopick/track-pocket), [TUNE.Pocket](https://github.com/utopick/tune-pocket) and [SING.Pocket](https://github.com/utopick/sing-pocket): no dependencies, no network requests.
 
-**Status: beta.** It has 16 pedals, 4 amps and 4 cabs (where each comes from: [docs/UNITS.md](docs/UNITS.md)), a board to order them, a live play view of one unit, a synthesized test riff, a looper (TUNE.Pocket's, lined up with the measured latency, with its loops kept on the device), backing tracks from your device, a mixer, a latency test and the usual Files tab (board export and import, themes, options, help in English and Spanish). It installs as a web app (PWA) and works offline.
+**Status: beta.** It has 16 pedals, 4 amps and 4 cabs (where each comes from: [docs/UNITS.md](docs/UNITS.md)), a board to order them, a live play view of one unit, a synthesized test riff, a looper (TUNE.Pocket's, lined up with the measured latency, with edit tools, effects and its loops kept on the device), a synth, a voice changer, backing tracks from your device, a mixer with effect pads, a latency test and the usual Files tab (board export and import, themes, options, help in English and Spanish). It installs as a web app (PWA) and works offline.
 
 ## How to run it
 
@@ -16,6 +16,9 @@ Serve the folder from `localhost` or HTTPS (the browser only gives the microphon
 - **BOARD** (the squares icon at the top): the signal enters at the top right and snakes square by square to the speaker at the bottom right. Tap an empty square to add a unit, tap a unit to turn it on or off, press and hold it (or double tap) to open it, drag it to move it.
 - **MIXER** (the faders icon, or the speaker square): guitar, test riff, tracks, loops, click and master volumes, mutes and meters.
 - **LOOPER** (the loop icon, TUNE.Pocket's): tempo, click, loop length (1, 2, 4 or 8 bars), recording delay and auto quantize; tap an empty pad to count in and record your board, tap a loop to play or stop it on the bar. EDIT: volume, overdub, reverse, normalize, nudge, quantize, crop, clear. FX: repeat, reverse, octave. UNDO. The loops are kept on the device.
+- **SYNTH** (the keyboard icon): eight instruments made by the app (subtractive, FM and organ synthesis: no samples), played from a MIDI controller (notes, velocity, sustain pedal, pitch bend, mod wheel) or the keys on the screen, with filter and envelope knobs, optionally through the pedal board.
+- **VOICE** (the face icon): the microphone through a voice changer (pitch shifter plus robot, megaphone, alien, choir and echo). Use headphones.
+- **MIXER** has a knob and a mute for each source (guitar, test riff, synth, voice, tracks, loops, click, master) and a lower button that swaps it for **FX PADS** on the whole mix (lo-fi, tape, radio, stutter, reverb... to latch or hold).
 - **TRACKS** (the note icon): add audio files from the device (kept in the browser, never uploaded) and play along.
 - **RECORD** (or the microphone icon at the top) starts listening. The thin bar under the top icons is the input level.
 - **The disk** (top right) opens Files: **FILES** (export, import, reset the board), **THEME**, **OPTIONS** and **HELP**.
