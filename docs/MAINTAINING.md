@@ -21,7 +21,7 @@ There is no build step, no framework and no dependencies, so anyone can open it,
 
 ## The views
 The header buttons: `live` (LIVE PLAY: one pedal, amp or cab full screen, section `rig`), `board` (the pedal board),
-`loop` (looper), `tracks`, `mix` (mixer), `files` (FILES, THEME, OPTIONS, HELP). `showView` switches between them and
+`loop` (looper), `synth` (eight instruments, MIDI or the keys on the screen), `voice` (voice changer), `tracks`, `mix` (mixer, with the FX pads on the whole mix), `files` (FILES, THEME, OPTIONS, HELP). `showView` switches between them and
 asks the view to draw itself (`renderUnit`, `boardFace`, `lpFace`, `trFace`, `mixFace`). The bottom ribbon of LIVE PLAY
 (RECORD, CABS, AMPS, PEDALS) has room for a fifth button that is not decided yet.
 
@@ -29,7 +29,7 @@ asks the view to draw itself (`renderUnit`, `boardFace`, `lpFace`, `trFace`, `mi
 - `PEDALS`, `AMPS`, `CABS`: the units, each with its knobs (`[id, label, min, max, default, how to show the value]`) and the function that
   builds its audio nodes. `FXI` finds a unit by id; `KINDS` names the three kinds.
 - `S`: everything the user chose: the unit shown per kind (`S.sel`), every unit's switch and knobs (`S.fx`), the 27
-  squares of the board in signal order (`S.slots`), the mixer (`S.mix`) and the looper settings (`S.loop`). Saved as
+  squares of the board in signal order (`S.slots`), the mixer (`S.mix`), the looper settings (`S.loop`), the synth (`S.syn`) and the voice (`S.voice`). Saved as
   `play.state`.
 - `A`: the audio engine while it runs (`A.ctx`, `A.nodes`, `A.mic`). `LP`: the looper's loops and recording. `TR`: the
   backing tracks. `OPT`, `AIN`, `AOUT`, `LAT`: the engine options, the input, the output and the last latency test.
@@ -46,11 +46,13 @@ resampling), with the raw input (no echo cancelling, noise suppression or auto g
 - The looper is TUNE.Pocket's (`lp...` functions, the `CLK` clock). The recording is moved by the measured latency
   (`lpLat`, REC DELAY).
 - The app stops listening when it goes to the background.
+- The SYNTH reads Web MIDI by itself (notes, sustain, pitch bend, mod wheel). It does not have the sister apps' MIDI
+  block (ASSIGN, TEST, DEVICE).
 
 ## Storage
 - localStorage: `play.state`, `play.opts`, `play.audioIn`, `play.audioOut`, `play.lat`, `play.theme`, `play.lang`.
 - IndexedDB `play-pocket`: store `tracks` (the backing tracks as blobs) and store `loops` (the looper's loops).
-- Everything that comes back is checked: `vetFx`, `vetSlots`, `vetMix` for the board (saved or imported), the checks
+- Everything that comes back is checked: `vetFx`, `vetSlots`, `vetMix`, `vetSyn`, `vetVoice` for the board and the other settings (saved or imported), the checks
   in `lpRestore` for the loops and in `trLoad` for the tracks. Keep it that way for anything new.
 - Saved data must keep loading: never rename a unit id or a knob id, add new ones.
 

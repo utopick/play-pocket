@@ -688,7 +688,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
       <button class="hv" id="hTracks" data-v="tracks" title="Tracks: your own backing tracks to play along with">
         <svg class="ic" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="17" cy="16" r="3" /></svg>
       </button>
-      <button class="hv" id="hMix" data-v="mix" title="Mixer: the volume of the guitar, the test riff, the tracks, the loops, the click and the master">
+      <button class="hv" id="hMix" data-v="mix" title="Mixer: the volume of the guitar, the test riff, the synth, the voice, the tracks, the loops, the click and the master, and effect pads on the whole mix">
         <svg class="ic" viewBox="0 0 24 24"><path d="M6 3v18M12 3v18M18 3v18" /><rect x="4" y="13" width="4" height="3" /><rect x="10" y="6" width="4" height="3" /><rect x="16" y="10" width="4" height="3" /></svg>
       </button>
       <button class="hv" id="hSynth" data-v="synth" title="Synth: play a keyboard with a MIDI controller or the screen, with eight instruments made by the app">
@@ -4545,13 +4545,13 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
           t: { en: "MIXER", es: "MIXER" },
           b: {
             en: [
-              "The faders icon at the top (or the speaker on the board) opens the **MIXER**: a strip for the **GUITAR** (your input), the **TEST RIFF**, the **TRACKS**, the **LOOPS** and the **CLICK**, and the **MASTER**, which sets what reaches your headphones. Each one is a **knob** like TRACK.Pocket's mixer: drag it up or down, tap it twice to put it back, and **M** mutes it.",
+              "The faders icon at the top (or the speaker on the board) opens the **MIXER**: a strip for the **GUITAR** (your input), the **TEST RIFF**, the **SYNTH**, the **VOICE**, the **TRACKS**, the **LOOPS** and the **CLICK**, and the **MASTER**, which sets what reaches your headphones. Each one is a **knob** like TRACK.Pocket's mixer: drag it up or down, tap it twice to put it back, and **M** mutes it.",
               "- 0 dB is unchanged. The bar under each one shows its level while sound plays.",
               "- A soft limiter after the master keeps a loud board from clipping harshly.",
               "- The lower button swaps the knobs for the **FX PADS**: effects on the whole mix (LO-FI, TAPE, RADIO, PHONE, UNDERWATER, STUTTER, LOW PASS, HIGH PASS, ECHO, REVERB, ROBOT, CRUNCH). With **LATCH** on, a tap turns an effect on or off, so you can leave LO-FI running; with it off, an effect plays while you hold it. **ALL OFF** turns them all off. **BACK TO MIXER** brings the knobs back.",
             ],
             es: [
-              "El icono de faders de arriba (o el altavoz del board) abre el **MIXER**: una tira para la **GUITAR** (tu entrada), el **TEST RIFF**, las **TRACKS**, los **LOOPS** y el **CLICK**, y el **MASTER**, que decide lo que llega a tus auriculares. Cada una es un **potenciómetro** como el mezclador de TRACK.Pocket: arrástralo arriba o abajo, tócalo dos veces para devolverlo a su sitio, y **M** lo silencia.",
+              "El icono de faders de arriba (o el altavoz del board) abre el **MIXER**: una tira para la **GUITAR** (tu entrada), el **TEST RIFF**, el **SYNTH**, la **VOICE**, las **TRACKS**, los **LOOPS** y el **CLICK**, y el **MASTER**, que decide lo que llega a tus auriculares. Cada una es un **potenciómetro** como el mezclador de TRACK.Pocket: arrástralo arriba o abajo, tócalo dos veces para devolverlo a su sitio, y **M** lo silencia.",
               "- 0 dB es sin cambio. La barra de debajo muestra su nivel mientras suena.",
               "- Un limitador suave después del master evita que un board muy fuerte sature de forma áspera.",
               "- El botón de abajo cambia los potenciómetros por los **FX PADS**: efectos sobre toda la mezcla (LO-FI, TAPE, RADIO, PHONE, UNDERWATER, STUTTER, LOW PASS, HIGH PASS, ECHO, REVERB, ROBOT, CRUNCH). Con **LATCH** activado, un toque enciende o apaga un efecto, así puedes dejar el LO-FI sonando; sin él, el efecto suena mientras lo mantienes pulsado. **ALL OFF** los apaga todos. **BACK TO MIXER** devuelve los potenciómetros.",
@@ -4669,7 +4669,8 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
               "- **The first beta.** 16 pedals, 4 amps and 4 cabs on a board, with your instrument or the test riff.",
               "- **PEDAL BOARD and LIVE PLAY** are two tabs: the board fills the screen with squares (tap a unit to turn it on or off, press and hold or double tap to open it, drag to move it), and LIVE PLAY shows one unit full screen with what it does, where the sound comes from and goes, and its waveform in and out.",
               "- **LOOPER** as in TUNE.Pocket: 16 pads in time, EDIT tools (volume, overdub, reverse, normalize, nudge, quantize, crop), loop FX, UNDO, and the loops are kept on the device.",
-              "- **MIXER** with knobs like TRACK.Pocket's, a mute and a meter under each.",
+              "- **MIXER** with knobs like TRACK.Pocket's, a mute and a meter under each, and **FX PADS** on the whole mix (lo-fi, tape, radio, stutter, echo, reverb and more, to latch or hold).",
+              "- **SYNTH:** eight instruments made by the app, played from a MIDI keyboard or the keys on the screen, straight to the mixer or through the pedal board. **VOICE:** the microphone through a voice changer (pitch, robot, megaphone and more). Use headphones.",
               "- **Install it:** the app is a web app (PWA). Add it to the Home Screen (iPhone: Safari ▸ Share; Android and desktop: Chrome ▸ Install app) and it opens like an app and works offline. **OPTIONS** has an **INSTALL** button.",
               "- **Safer:** an imported board and the loops kept on the device are checked before they are used.",
             ],
@@ -4678,7 +4679,8 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
               "- **La primera beta.** 16 pedales, 4 amplificadores y 4 pantallas en un board, con tu instrumento o el riff de prueba.",
               "- **PEDAL BOARD y LIVE PLAY** son dos pestañas: el board llena la pantalla de casillas (toca una unidad para encenderla o apagarla, mantén pulsado o toca dos veces para abrirla, arrastra para moverla), y LIVE PLAY muestra una unidad a pantalla completa con lo que hace, de dónde viene y a dónde va el sonido, y su onda de entrada y de salida.",
               "- **LOOPER** como en TUNE.Pocket: 16 pads a tempo, herramientas EDIT (volumen, overdub, reverse, normalize, desplazar, cuantizar, recortar), efectos de loop, UNDO, y los loops se guardan en el dispositivo.",
-              "- **MIXER** con potenciómetros como los de TRACK.Pocket, un mute y un medidor bajo cada uno.",
+              "- **MIXER** con potenciómetros como los de TRACK.Pocket, un mute y un medidor bajo cada uno, y **FX PADS** sobre toda la mezcla (lo-fi, tape, radio, stutter, eco, reverb y más, fijos o mientras los mantienes).",
+              "- **SYNTH:** ocho instrumentos generados por la app, tocados desde un teclado MIDI o las teclas de la pantalla, directos al mezclador o a través del board. **VOICE:** el micrófono a través de un cambiador de voz (tono, robot, megáfono y más). Usa auriculares.",
               "- **Instálala:** la app es una web app (PWA). Añádela a la pantalla de inicio (iPhone: Safari ▸ Compartir; Android y escritorio: Chrome ▸ Instalar app) y se abre como una app y funciona sin conexión. **OPTIONS** tiene un botón **INSTALL**.",
               "- **Más segura:** un board importado y los loops guardados en el dispositivo se comprueban antes de usarse.",
             ],
