@@ -1,8 +1,10 @@
+![PLAY.Pocket](.github/banner.png)
+
 # PLAY.Pocket
 
-A pocket guitar rig in one HTML file: plug a guitar into an audio interface or a USB guitar cable, and play it through pedals, amps and cabs laid out on a board, over your own backing tracks and loops, in the browser. The sister app of [TRACK.Pocket](https://github.com/utopick/track-pocket), [TUNE.Pocket](https://github.com/utopick/tune-pocket) and [SING.Pocket](https://github.com/utopick/sing-pocket): no install, no dependencies, no network requests.
+A pocket guitar rig in one HTML file: plug a guitar into an audio interface or a USB guitar cable, and play it through pedals, amps and cabs laid out on a board, over your own backing tracks and loops, in the browser. The sister app of [TRACK.Pocket](https://github.com/utopick/track-pocket), [TUNE.Pocket](https://github.com/utopick/tune-pocket) and [SING.Pocket](https://github.com/utopick/sing-pocket): no dependencies, no network requests.
 
-**Status: prototype.** Not released yet. It has 16 pedals, 4 amps and 4 cabs (where each comes from: [docs/UNITS.md](docs/UNITS.md)), a board to order them, a synthesized test riff, a looper (the core of TUNE's, lined up with the measured latency), backing tracks from your device, a mixer, a latency test and the usual Files tab (board export and import, themes, options, help in English and Spanish). Next: the rest of TUNE's looper (effects, quantize, editing, keeping loops), and install as an app.
+**Status: beta.** It has 16 pedals, 4 amps and 4 cabs (where each comes from: [docs/UNITS.md](docs/UNITS.md)), a board to order them, a live play view of one unit, a synthesized test riff, a looper (TUNE.Pocket's, lined up with the measured latency, with its loops kept on the device), backing tracks from your device, a mixer, a latency test and the usual Files tab (board export and import, themes, options, help in English and Spanish). It installs as a web app (PWA) and works offline.
 
 ## How to run it
 
@@ -10,12 +12,12 @@ Serve the folder from `localhost` or HTTPS (the browser only gives the microphon
 
 ## The basics
 
-- **PEDALS, AMPS, CABS** (the bottom bar) show one unit at a time; **◁ ▷** or a swipe changes it. Drag a knob up or down; the switch turns the unit on.
-- **BOARD** (the squares icon at the top): the signal enters at the top right and snakes square by square to the speaker at the bottom right. Tap an empty square to add a unit, tap a unit twice to edit it, drag it to move it. **RIFF ▶** plays a test riff through the board.
+- **LIVE PLAY** (the pedal icon at the top): **PEDALS, AMPS, CABS** (the bottom bar) show one unit at a time, full screen; **◁ ▷** or a swipe changes it. Drag a knob up or down; the switch turns the unit on. The metal **TEST** button plays a test riff through the rig, and the waveform shows what goes into the unit and what comes out.
+- **BOARD** (the squares icon at the top): the signal enters at the top right and snakes square by square to the speaker at the bottom right. Tap an empty square to add a unit, tap a unit to turn it on or off, press and hold it (or double tap) to open it, drag it to move it.
 - **MIXER** (the faders icon, or the speaker square): guitar, test riff, tracks, loops, click and master volumes, mutes and meters.
 - **LOOPER** (the loop icon, TUNE.Pocket's): tempo, click, loop length (1, 2, 4 or 8 bars), recording delay and auto quantize; tap an empty pad to count in and record your board, tap a loop to play or stop it on the bar. EDIT: volume, overdub, reverse, normalize, nudge, quantize, crop, clear. FX: repeat, reverse, octave. UNDO. The loops are kept on the device.
 - **TRACKS** (the note icon): add audio files from the device (kept in the browser, never uploaded) and play along.
-- **RECORD** starts listening. The thin bar under the top icons is the input level.
+- **RECORD** (or the microphone icon at the top) starts listening. The thin bar under the top icons is the input level.
 - **The disk** (top right) opens Files: **FILES** (export, import, reset the board), **THEME**, **OPTIONS** and **HELP**.
 - **OPTIONS** has the stats the browser reports, the **LATENCY TEST** (a ball bounces; pick a string on each click; or plug a cable from the output into the input and let it measure itself), the input, channel, gain and output, and the engine switches (sample rate, buffer, oversampling, raw input).
 
@@ -50,4 +52,15 @@ Under about 30 ms it feels like an amp; up to 60 ms it is playable with a little
 ## Files
 
 - `index.html`: the complete app (markup, styles, audio engine, help)
+- `manifest.webmanifest`, `sw.js`, `icons/`: what makes it installable and offline (`docs/PWA.md`)
 - `docs/UNITS.md`: where every pedal, amp and cab comes from and how it is built
+- `docs/MAINTAINING.md`: notes for whoever maintains it. `tests/e2e.py`: automated checks (Selenium)
+- `LICENSE`: license terms
+
+## License
+
+PLAY.Pocket is released under the MIT License (see `LICENSE`).
+
+### Third-party code
+
+The banner, app icons and favicons are lettered in [Inter](https://rsms.me/inter/) (SIL Open Font License 1.1), converted to shapes, so no font file is included. The app itself has no third-party code.
