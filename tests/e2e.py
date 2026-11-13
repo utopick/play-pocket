@@ -43,7 +43,7 @@ class Page(unittest.TestCase):
     def setUp(self):
         o = webdriver.ChromeOptions()
         if not os.environ.get("HEAD"): o.add_argument("--headless=new")
-        o.add_argument("--window-size=390,844"); o.add_argument("--autoplay-policy=no-user-gesture-required")
+        o.add_argument("--mute-audio"); o.add_argument("--window-size=390,844"); o.add_argument("--autoplay-policy=no-user-gesture-required")
         if APP == "play":  # the rig needs an input: Chrome's pretend microphone (a beep), allowed without asking
             o.add_argument("--use-fake-device-for-media-stream"); o.add_argument("--use-fake-ui-for-media-stream")
         self.d = webdriver.Chrome(options=o)
@@ -373,6 +373,34 @@ class Play(Page):
         self.assertEqual(self.js("return LP.loops.filter(Boolean).length"), 1)
         self.assertEqual(self.errors(), [])
 
+    def wav(self, name, hz, secs):
+        import math, struct, tempfile, wave
+        path = os.path.join(tempfile.mkdtemp(), name)
+        w = wave.open(path, "wb"); w.setnchannels(1); w.setsampwidth(2); w.setframerate(22050)
+        w.writeframes(b"".join(struct.pack("<h", int(9000 * math.sin(2 * math.pi * hz * i / 22050))) for i in range(int(22050 * secs)))); w.close()
+        return path
+
+    def test_tracks_playlist_player_and_the_mixer_wave(self):
+        self.open()
+        self.js("document.querySelector('#hTracks').click()"); self.wait(0.3)
+        for f in (self.wav("one.wav", 440, 3), self.wav("two.wav", 660, 2)):
+            self.d.find_element("id", "trFile").send_keys(f); self.wait(0.8)
+        self.assertEqual(self.js("return TR.list.length"), 2)
+        for i in (1, 2): self.js("document.querySelector('#trList .trk:nth-child(%d) .ta').click()" % i)  # the list is drawn again after each tap
+        self.assertEqual(self.js("return S.loop.trQ.length"), 2)
+        self.js("document.querySelector('#trPP').click()"); self.wait(1.0)
+        self.assertTrue(self.js("return !!TR.src && trPos() > 0.3"), "the song did not play")
+        self.js("document.querySelector('#trPP').click()"); self.wait(0.2)  # pause
+        self.assertTrue(self.js("return TR.paused && !TR.src && trPos() > 0.3"), "pause lost the place")
+        self.js("document.querySelector('#trNext').click()"); self.wait(0.8)
+        self.assertEqual(self.js("return TR.cur"), 1)
+        self.js("S.loop.trSpeed = 1.25; S.loop.trPitch = 3; trApply()"); self.wait(0.4)
+        self.assertTrue(self.js("return TR.src.playbackRate.value === 1.25"))
+        self.js("document.querySelector('#hMix, [data-v=mix]').click()"); self.wait(0.6)
+        self.assertTrue(self.js("return document.querySelector('#mixScope').clientHeight > 40"), "the mixer has no wave")
+        self.assertEqual(self.errors(), [])
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
