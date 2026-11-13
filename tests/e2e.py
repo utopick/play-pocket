@@ -531,6 +531,56 @@ class Play(Page):
         self.midi(0x99, 36, 100); self.midi(0x89, 36, 0); self.wait(0.5)
         self.assertClean()
 
+    # ---- SYNTH: the chain of waves (MY SOUND) and the samples
+    def test_synth_my_sound_chain_is_built_saved_and_played(self):
+        self.open()
+        self.js("showView('synth'); S.syn.inst = SYN.findIndex(q => q.id === 'mine'); synFace()"); self.wait(0.3)
+        self.assertEqual(self.js("return document.querySelectorAll('#synChain .cs').length"), 6)
+        for _ in range(3): self.js("document.querySelector('#synChain .cs.empty:not(.dim)').click()")  # three waves
+        self.assertEqual(self.js("return S.syn.mine.length"), 3)
+        self.js("document.querySelector('#synBar [data-a=wave]').click(); document.querySelector('#synBar [data-a=oct-]').click()")  # the chosen one: triangle, an octave down
+        self.assertEqual(self.js("return S.syn.mine[2].slice(0, 1).concat(S.syn.mine[2][2])"), ["triangle", -1])
+        for _ in range(5): self.js("document.querySelector('#synChain .cs.empty:not(.dim)') && document.querySelector('#synChain .cs.empty:not(.dim)').click()")
+        self.assertEqual(self.js("return S.syn.mine.length"), 6)  # never more than six
+        self.js("engineEnsure().then(() => synStart(60, 0.8))"); self.wait(0.5)
+        self.assertEqual(self.js("return SYV.voices.size"), 1)
+        self.reopen(); self.js("showView('synth')"); self.wait(0.3)
+        self.assertEqual(self.js("return S.syn.mine.length"), 6)
+        self.js("S.syn.inst = 0; synFace(); document.querySelector('#synBar [data-a=copy]').click()")  # a copy of the first instrument
+        self.assertEqual(self.js("return [SYN[S.syn.inst].id, S.syn.mine.length]"), ["mine", 2])
+        self.assertClean()
+
+    def test_synth_samples_play_loop_and_are_kept(self):
+        self.open()
+        self.js("showView('synth'); S.syn.inst = SYN.findIndex(q => q.id === 'smp1'); synFace()"); self.wait(0.3)
+        self.assertTrue(self.js("return document.querySelector('#synLoop').disabled === false"))
+        self.js("engineEnsure().then(() => synStart(60, 0.8))"); self.wait(0.4)
+        self.assertEqual(self.js("return SYV.voices.size"), 0)  # empty: nothing plays
+        self.js("smpSet(0, Float32Array.from({ length: 4800 }, (_, i) => Math.sin(i / 8)), 48000)"); self.wait(0.5)
+        self.js("document.querySelector('#synLoop').click()")
+        self.js("synStart(64, 0.8)"); self.wait(0.6)  # 0.1 s of sample, looped: still sounding
+        self.assertEqual(self.js("return SYV.voices.size"), 1)
+        self.assertTrue(self.js("return [...SYV.voices.values()][0].oscs[0].loop"))
+        self.reopen(); self.js("showView('synth')"); self.wait(1.0)
+        self.assertEqual(self.js("return SMPS[0] && SMPS[0].d.length"), 4800)
+        self.assertClean()
+
+    def test_help_has_live_demos_that_run(self):
+        self.open()
+        self.js("openHelp('pedal')"); self.wait(0.5)
+        self.assertEqual(self.js("return [...document.querySelectorAll('#hBody .hdemo')].map(e => e.dataset.demo)"), ["clip", "loop", "chain"])
+        self.js("""const ev = (el, t, x, y) => el.dispatchEvent(new PointerEvent(t, { bubbles: true, clientX: x, clientY: y, pointerId: 1 }));
+          const cv = (n) => document.querySelector('.hdemo[data-demo=' + n + '] canvas');
+          let r = cv('chain').getBoundingClientRect(); cv('chain').scrollIntoView(); r = cv('chain').getBoundingClientRect();
+          ev(cv('chain'), 'pointerdown', r.left + 10, r.bottom - 20); ev(cv('chain'), 'pointerup', r.left + 10, r.bottom - 20);
+          r = cv('clip').getBoundingClientRect(); ev(cv('clip'), 'pointerdown', r.left + 50, r.top + 20); ev(cv('clip'), 'pointerup', 0, 0);
+          document.querySelector('.hdemo[data-demo=loop] [data-hdb=rec]').click(); cv('loop').scrollIntoView()""")
+        self.wait(4.5)  # a bar of count-in at 96 bpm is 2.5 s
+        self.assertTrue(self.js("return document.querySelector('.hdemo[data-demo=loop] [data-hdb=rec]').classList.contains('on')"))
+        self.js("closeHelp()"); self.wait(0.3)
+        self.assertEqual(self.js("return hdLive.length"), 0)
+        self.assertClean()
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
