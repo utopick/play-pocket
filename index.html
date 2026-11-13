@@ -4342,7 +4342,7 @@ html[data-theme="demo"] .card { border: 2px solid var(--line); background: var(-
         const el = miPadsOf()[i];
         if (!el) return;
         if (S.view === "board" || S.view === "tracks") return on && el.click();
-        const ev = (t) => el.dispatchEvent(new PointerEvent(t, { bubbles: true, cancelable: true, pointerId: 1 }));
+        const ev = (t) => el.dispatchEvent(new PointerEvent(t, { bubbles: true, cancelable: true, pointerId: 100 + i }));
         on ? ev("pointerdown") : ev("pointerup");
       };
       MI.actions = () => [
