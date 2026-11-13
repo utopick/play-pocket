@@ -21,7 +21,7 @@ There is no build step, no framework and no dependencies, so anyone can open it,
 
 ## The views
 The header buttons: `live` (LIVE PLAY: one pedal, amp or cab full screen, section `rig`), `board` (the pedal board),
-`loop` (looper), `synth` (eight instruments, MIDI or the keys on the screen), `voice` (voice changer), `tracks`, `mix` (mixer, with the FX pads on the whole mix), `files` (FILES, THEME, OPTIONS, HELP). `showView` switches between them and
+`loop` (looper), `synth` (sixteen instruments, MY SOUND and four samples, MIDI or the keys on the screen), `voice` (voice changer), `tracks`, `mix` (mixer, with the FX pads on the whole mix), `files` (FILES, THEME, OPTIONS, HELP). `showView` switches between them and
 asks the view to draw itself (`renderUnit`, `boardFace`, `lpFace`, `trFace`, `mixFace`). The bottom ribbon of LIVE PLAY
 (RECORD, CABS, AMPS, PEDALS) has room for a fifth button that is not decided yet.
 
@@ -46,8 +46,14 @@ resampling), with the raw input (no echo cancelling, noise suppression or auto g
 - The looper is TUNE.Pocket's (`lp...` functions, the `CLK` clock). The recording is moved by the measured latency
   (`lpLat`, REC DELAY).
 - The app stops listening when it goes to the background.
-- The SYNTH reads Web MIDI by itself (notes, sustain, pitch bend, mod wheel). It does not have the sister apps' MIDI
-  block (ASSIGN, TEST, DEVICE).
+- **MIDI** is the sister apps' block: `<script id="midi-device">` (the panel, identical in all apps), `micard-css`, and the MIDI core in the main
+  script (`MI`, `midiMsg`, ASSIGN, MONITOR, MAP, MOD). PLAY adds pitch bend (`MI.bend`). What the controls do follows the screen:
+  `MI.defaults()` lists the knobs (`miKnobs()`: the unit's knobs, the mixer with the master first, the synth, voice and tracks knobs through
+  `mkPanel`'s `root._mk`) and the pads (`miPadsOf()`: the board squares, looper pads or loop FX, the buttons of TRACKS, the mixer FX pads, the voice pads;
+  on the rig pad 1 is on/off and pad 2 TEST). `miPadPress` clicks or sends pointerdown/up to the element, so the pads do exactly what a tap does.
+- **SYNTH waves and samples:** `SYN` has `MY SOUND` (`type: "sub"`, its `osc` is `S.syn.mine`, up to six `[wave, detune, octave]`) and four `type: "usr"`
+  instruments (`SMPS[slot]`, mono Float32, up to 12 s, IndexedDB store `samples`). `synChainFace` draws the six squares and the buttons under them.
+  The recorder hooks the looper's capture worklet (`SREC`). The FM piano samples were removed (430 KB). Idea: a slicer for the samples (see the roadmap).
 
 ## Storage
 - localStorage: `play.state`, `play.opts`, `play.audioIn`, `play.audioOut`, `play.lat`, `play.theme`, `play.lang`.
