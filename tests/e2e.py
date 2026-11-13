@@ -38,6 +38,11 @@ def setUpModule():
 def tearDownModule(): SRV.shutdown()
 
 
+# a fake MIDI keyboard (an MPK mini Play mk3 by name): the tests send it messages with self.midi(...)
+FAKE_MIDI = """(() => { const inp = { id: 'm', name: 'MPK mini Play mk3', manufacturer: 'AKAI', state: 'connected', type: 'input', onmidimessage: null }; window.__inp = inp;
+  navigator.requestMIDIAccess = () => Promise.resolve({ inputs: new Map([['m', inp]]), outputs: new Map(), onstatechange: null, sysexEnabled: false }); })();"""
+
+
 class Page(unittest.TestCase):
     """A fresh Chrome (empty storage) for each test."""
     def setUp(self):
@@ -56,6 +61,13 @@ class Page(unittest.TestCase):
     def js(self, code, *a): return self.d.execute_script(code, *a)
 
     def wait(self, s): __import__("time").sleep(s)
+
+    def midi_open(self):
+        self.d.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {"source": FAKE_MIDI})
+        self.open()
+        self.js("document.querySelector('#midiDev').click()"); self.wait(0.9)
+
+    def midi(self, *d): self.js("window.__inp.onmidimessage({ data: new Uint8Array(arguments[0]) })", list(d))
 
     def reopen(self, wait=1.2): self.d.refresh(); self.wait(wait)
 
@@ -475,6 +487,49 @@ class Play(Page):
         self.js("document.querySelector('#hMix, [data-v=mix]').click()"); self.wait(0.6)
         self.assertTrue(self.js("return document.querySelector('#mixScope').clientHeight > 40"), "the mixer has no wave")
         self.assertEqual(self.errors(), [])
+
+
+    # ---- MIDI: the shared panel and the screens' own knobs and pads
+    def test_midi_rig_knobs_and_pads(self):
+        self.midi_open()
+        self.assertEqual(self.js("return document.querySelector('#midiDev').textContent"), "MIDI: MPK mini Play mk3")
+        self.js("showView('rig')"); self.wait(0.3)
+        v0 = self.js("return S.fx[cur().id][cur().knobs[0][0]]")
+        self.midi(0xB0, 74, 127); self.wait(0.1)  # knob 1 of the MPK: the first knob of the unit
+        k = self.js("return [cur().knobs[0][3], S.fx[cur().id][cur().knobs[0][0]]]")
+        self.assertEqual(k[1], k[0])
+        on = self.js("return S.fx[cur().id].on")
+        self.midi(0x99, 36, 100); self.midi(0x89, 36, 0); self.wait(0.1)  # pad 1: on / off
+        self.assertNotEqual(self.js("return S.fx[cur().id].on"), on)
+        self.midi(0x99, 38, 100); self.midi(0x89, 38, 0); self.wait(0.3)  # pad 2: the test riff
+        self.assertTrue(self.js("return !!A.riff"))
+        self.assertClean()
+
+    def test_midi_mixer_leads_with_the_master_and_the_synth_plays(self):
+        self.midi_open()
+        self.js("showView('mix')"); self.wait(0.3)
+        self.midi(0xB0, 74, 0); self.wait(0.1)
+        self.assertEqual(self.js("return S.mix.master.v"), 0)
+        self.midi(0xB0, 71, 127); self.wait(0.1)  # knob 2: the next one in the mixer
+        self.assertEqual(self.js("return S.mix.gtr.v"), 1.5)
+        self.js("showView('synth')"); self.wait(0.3)
+        self.midi(0x90, 60, 100); self.wait(0.3)
+        self.assertEqual(self.js("return SYV.voices.size"), 1)
+        self.midi(0xB0, 64, 127); self.midi(0x80, 60, 0); self.wait(0.1)  # the sustain pedal keeps it
+        self.assertEqual(self.js("return SYV.voices.size"), 1)
+        self.midi(0xB0, 64, 0); self.wait(0.2)
+        self.assertEqual(self.js("return SYV.voices.size"), 0)
+        self.assertClean()
+
+    def test_midi_pads_follow_the_screen(self):
+        self.midi_open()
+        self.js("showView('voice')"); self.wait(0.3)
+        sel = self.js("return S.voice.sel")
+        self.midi(0x99, 38, 100); self.midi(0x89, 38, 0); self.wait(0.2)  # pad 2 of the MPK sends a drum note: the second voice pad
+        self.assertEqual(self.js("return S.voice.sel"), 1)
+        self.js("showView('board')"); self.wait(0.3)
+        self.midi(0x99, 36, 100); self.midi(0x89, 36, 0); self.wait(0.5)
+        self.assertClean()
 
 
 if __name__ == "__main__":
