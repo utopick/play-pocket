@@ -380,6 +380,82 @@ class Play(Page):
         w.writeframes(b"".join(struct.pack("<h", int(9000 * math.sin(2 * math.pi * hz * i / 22050))) for i in range(int(22050 * secs)))); w.close()
         return path
 
+    # ---- TRACKS edge cases (QA additions)
+    def tracks(self, *songs):
+        self.open()
+        self.js("document.querySelector('#hTracks').click()"); self.wait(0.3)
+        for i, secs in enumerate(songs):
+            self.d.find_element("id", "trFile").send_keys(self.wav("s%d.wav" % i, 440 + 110 * i, secs)); self.wait(0.6)
+        self.assertEqual(self.js("return TR.list.length"), len(songs))
+
+    def test_tracks_without_songs_or_engine(self):
+        self.open()
+        self.js("document.querySelector('#hTracks').click()"); self.wait(0.3)
+        for b in ("trPP", "trNext", "trPrev", "trStop", "trLoop", "trShuf", "trBoard", "trFx", "trQClear"):
+            self.js("document.querySelector('#' + arguments[0]).click()", b); self.wait(0.05)
+        self.js("S.loop.trSpeed = 1.5; S.loop.trPitch = -4; trApply(); trFrame()")
+        self.js("document.querySelector('#trWave').dispatchEvent(new PointerEvent('pointerdown', {clientX: 50, clientY: 10}))")
+        self.assertEqual(self.js("return [TR.cur, !!TR.src, TR.paused]"), [-1, False, False])
+        self.assertClean()
+
+    def test_shuffle_and_repeat_with_one_song(self):
+        self.tracks(1, 1)
+        self.js("S.loop.trQ = [TR.list[0].id]; S.loop.trShuf = true; TR.sel = 0; TR.cur = -1")
+        got = self.js("return ['off', 'one', 'all'].map(m => (S.loop.trMode = m, [trNextIndex(1), trNextIndex(-1)]))")
+        self.assertEqual(got, [[-1, 0], [-1, 0], [0, 0]])  # one song in the playlist: shuffle never picks the other song
+        self.assertEqual(self.errors(), [])
+
+    def test_delete_the_playing_track_and_a_playlist_track(self):
+        self.tracks(3, 3, 3)
+        self.js("S.loop.trQ = TR.list.map(t => t.id); return trStart(1)"); self.wait(0.3)
+        dele = lambda i: self.js("for (let k = 0; k < 2; k++) document.querySelector('#trList [data-del=\"%d\"]').click()" % i)
+        dele(0); self.wait(0.3)  # a song before the one playing: it keeps playing, under its new number
+        self.assertEqual(self.js("return [TR.list.length, TR.cur, TR.list[TR.cur].name, !!TR.src, S.loop.trQ.length]"), [2, 0, "s1.wav", True, 2])
+        dele(0); self.wait(0.3)  # the one playing
+        self.assertEqual(self.js("return [TR.list.length, TR.cur, TR.sel, !!TR.src, S.loop.trQ.length]"), [1, -1, -1, False, 1])
+        self.assertClean()
+
+    def test_seek_speed_and_pitch_while_paused(self):
+        self.tracks(3)
+        self.js("return trStart(0)"); self.wait(0.4)
+        self.js("trPause()")
+        self.js("const c = document.querySelector('#trWave'), r = c.getBoundingClientRect(); c.dispatchEvent(new PointerEvent('pointerdown', {clientX: r.left + r.width / 2, clientY: r.top + 5}))")
+        self.assertEqual(self.js("return [TR.paused, !!TR.src, Math.round(TR.base * 10) / 10]"), [True, False, 1.5])
+        self.js("S.loop.trSpeed = 1.5; S.loop.trPitch = 3; trApply()")
+        self.assertEqual(self.js("return [TR.paused, !!TR.src, Math.round(trPos() * 10) / 10]"), [True, False, 1.5])
+        self.js("return trToggle()"); self.wait(0.3)
+        self.assertEqual(self.js("return [!!TR.src, TR.src.playbackRate.value]"), [True, 1.5])
+        self.assertTrue(1.5 <= self.js("return trPos()") < 2.3)
+        self.js("trStop()")
+        self.assertEqual(self.errors(), [])
+
+    # (was a bug, fixed) trApply() reads trPos() after the new speed is set, so the time already played is counted at the new speed
+    def test_speed_change_keeps_the_place(self):
+        self.tracks(4)
+        self.js("return trStart(0)"); self.wait(1.5)
+        before = self.js("return trPos()")
+        after = self.js("S.loop.trSpeed = 0.5; trApply(); return trPos()")
+        self.js("trStop()")
+        self.assertLess(abs(after - before), 0.2)
+
+    # (was a bug, fixed) with REPEAT THIS SONG the source loops but trPos() stops at the end (Math.min(dur, ...))
+    def test_repeat_this_song_clock_goes_round(self):
+        self.tracks(1)
+        self.js("S.loop.trMode = 'one'; return trStart(0)"); self.wait(1.5)
+        pos = self.js("return trPos()")
+        self.js("trStop()")
+        self.assertLess(pos, 0.9)
+
+    # (was a bug, fixed) trStart() awaits the decoding with no check that it is still the latest call: two quick starts both play, STOP ends one
+    def test_two_quick_starts_play_one_song(self):
+        self.tracks(3, 3)
+        self.js("""window.__srcs = []; const st = AudioBufferSourceNode.prototype.start, sp = AudioBufferSourceNode.prototype.stop;
+          AudioBufferSourceNode.prototype.start = function (...a) { if (this.buffer && this.buffer.duration > 2) __srcs.push(this); return st.apply(this, a); };
+          AudioBufferSourceNode.prototype.stop = function (...a) { this.__off = 1; return sp.apply(this, a); };""")
+        self.js("return Promise.all([trStart(0), trStart(1)])"); self.wait(0.3)
+        self.js("trStop()")
+        self.assertEqual(self.js("return __srcs.filter(s => !s.__off).length"), 0, "a song keeps playing after STOP")
+
     def test_tracks_playlist_player_and_the_mixer_wave(self):
         self.open()
         self.js("document.querySelector('#hTracks').click()"); self.wait(0.3)
