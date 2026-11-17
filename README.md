@@ -2,7 +2,7 @@
 
 # PLAY.Pocket
 
-A pocket guitar rig in one HTML file: plug a guitar into an audio interface or a USB guitar cable, and play it through pedals, amps and cabs laid out on a board, over your own backing tracks and loops, in the browser. The sister app of [TRACK.Pocket](https://github.com/utopick/track-pocket), [TUNE.Pocket](https://github.com/utopick/tune-pocket) and [SING.Pocket](https://github.com/utopick/sing-pocket): no dependencies, no network requests.
+Just for kicks, and trying to get as much juice out of a PWA environment as possible, this is a pocket guitar rig, synth and voice changer in one HTML file: plug a guitar into an audio interface or a USB guitar cable, and play it through pedals, amps and cabs laid out on a board, over your own backing tracks and loops, in the browser. Plug a midi keyboard and play with a synth, sing through your mic and use voice effects. The sister app of [TRACK.Pocket](https://github.com/utopick/track-pocket), [TUNE.Pocket](https://github.com/utopick/tune-pocket) and [SING.Pocket](https://github.com/utopick/sing-pocket): no dependencies, no network requests.
 
 **Status: 1.0.0, the first release.** It has 16 pedals, 4 amps and 4 cabs (where each comes from: [docs/UNITS.md](docs/UNITS.md)), a board to order them, a live play view of one unit, a synthesized test riff, a looper (TUNE.Pocket's, lined up with the measured latency, with edit tools, effects and its loops kept on the device), a synth, a voice changer, backing tracks from your device, a mixer with effect pads, a latency test and the usual Files tab (named pedal chains, board export and import, themes, options, help in English and Spanish). It installs as a web app (PWA) and works offline.
 
@@ -56,7 +56,6 @@ Serve the folder from `localhost` or HTTPS (the browser only gives the microphon
 - **RECORD** (or the microphone icon at the top) starts listening. The thin bar under the top icons is the input level.
 - **The disk** (top right) opens Files: **FILES** (export, import, reset the board), **THEME**, **OPTIONS** and **HELP**.
 - **OPTIONS** has the stats the browser reports, the **LATENCY TEST** (a ball bounces; pick a string on each click; or plug a cable from the output into the input and let it measure itself), the input, channel, gain and output, and the engine switches (sample rate, buffer, oversampling, raw input).
-
 ### Themes
 
 Six looks, from the disk ▸ **THEME**: Dark, Light, Terminal, Dungeon synth, DMG and Demoscene. All the Pocket apps share them.
