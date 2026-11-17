@@ -6,6 +6,40 @@ A pocket guitar rig in one HTML file: plug a guitar into an audio interface or a
 
 **Status: 1.0.0, the first release.** It has 16 pedals, 4 amps and 4 cabs (where each comes from: [docs/UNITS.md](docs/UNITS.md)), a board to order them, a live play view of one unit, a synthesized test riff, a looper (TUNE.Pocket's, lined up with the measured latency, with edit tools, effects and its loops kept on the device), a synth, a voice changer, backing tracks from your device, a mixer with effect pads, a latency test and the usual Files tab (named pedal chains, board export and import, themes, options, help in English and Spanish). It installs as a web app (PWA) and works offline.
 
+**Open it:** [utopick.github.io/play-pocket](https://utopick.github.io/play-pocket/) · **Install it:** it is a web app (PWA): on Android, Chrome ▸ **Install app**; on iPhone, Safari ▸ Share ▸ **Add to Home Screen**; on a computer, the install icon in the address bar. Once installed it opens like an app and works offline.
+
+I've been adding features and tweaking a lot, so they come out not fully tested, and there could be bugs. Leave me an issue and I'll fix it.
+
+There is a help wiki inside (también en español), with small interactive demos you can touch and hear: a DRIVE that squashes the wave, a sound built from waves and a loop recorded in time.
+
+## Why did I release these apps? 
+
+Because GitHub allows me to host them in a GitHub site if I make them public, and I don't want to host them myself. 
+
+Also because my friends told me that they are useful and some of you may want a free, ad-less gadget to pass the time.
+
+## Ads and cookies
+
+Yeah, no.
+
+No ads, no cookies, no nothing. This is free and clean. No hidden stealers, no weird intentions.
+
+Why is it free? Because not everything should be a product.
+
+## AI use
+
+I'm a programmer and I have been coding for a living for over two decades, but life has given me too little free time that I want to spend offline and outside, making music and art. So I used a lot of AI to build this in a quick and easy way.
+
+I'm not going to take credit for the code, even though I started this app from my own older code. I built it with the help of an AI coding assistant (Claude, by Anthropic), which wrote and reworked much of the code following my designs and notes.
+
+The app itself uses no AI: everything runs on your device, and nothing you play, sing or record is sent to any AI service or anywhere else for that matter. If that isn't the case just shame me publicly and I'll fix it.
+
+I did waste a lot of tokens by making it code it in a non-minified way, so if the bubble bursts and we go back to the basics it could be maintainable. 
+
+If you want to try something made by me by hand (95%, I did use an early model to find some bugs but solved them by hand) in which I made the code, assets, music and all, check out Nanaya, my Pico-8 tower defense game: https://www.lexaloffle.com/bbs/?tid=153336
+
+![alt text](.github/readme/nanaya.png)
+
 ## How to run it
 
 Serve the folder from `localhost` or HTTPS (the browser only gives the microphone to secure pages), for example with the workspace's `dev-server.js`, and open it in Chrome or Firefox on a computer, or Firefox on Android. Use headphones or the interface's output: with a phone's own mic and speaker the sound feeds back.
@@ -22,6 +56,49 @@ Serve the folder from `localhost` or HTTPS (the browser only gives the microphon
 - **RECORD** (or the microphone icon at the top) starts listening. The thin bar under the top icons is the input level.
 - **The disk** (top right) opens Files: **FILES** (export, import, reset the board), **THEME**, **OPTIONS** and **HELP**.
 - **OPTIONS** has the stats the browser reports, the **LATENCY TEST** (a ball bounces; pick a string on each click; or plug a cable from the output into the input and let it measure itself), the input, channel, gain and output, and the engine switches (sample rate, buffer, oversampling, raw input).
+
+### Themes
+
+Six looks, from the disk ▸ **THEME**: Dark, Light, Terminal, Dungeon synth, DMG and Demoscene. All the Pocket apps share them.
+
+### Your data
+
+The board, the knobs, the mixer and the options are stored in your browser (`localStorage`); the loops, the backing tracks and the samples in its database (`IndexedDB`). None of it is uploaded anywhere. Clearing browser storage removes them, so export the board from **FILES** first.
+
+## Install it as an app (PWA)
+
+PLAY.Pocket is a progressive web app (PWA): the hosted page can be installed on the home screen or desktop, opens in its own window without browser bars, and keeps working with no connection. There is no store and no download. The first visit has to be online; after that it starts offline.
+
+### iPhone and iPad (iOS)
+
+1. Open [utopick.github.io/play-pocket](https://utopick.github.io/play-pocket/) in **Safari** (other iOS browsers cannot install web apps from the share menu).
+2. Tap **Share**, then **Add to Home Screen**, then **Add**.
+3. Open it from the new icon. The microphone asks for permission the first time you use it.
+
+Notes: Safari on iOS has no Web MIDI, so MIDI keyboards and pads do not work there. On iOS, Safari deletes the data of websites you have not used for 7 days, but an app added to the Home Screen is exempt from that rule: so install it, rather than keeping it in a Safari tab. Even so, export what you want to keep (iOS can still free storage when the phone is nearly full).
+
+### Android
+
+1. Open the page in **Chrome** (Edge, Brave and Samsung Internet work too).
+2. Choose menu ⋮ ▸ **Install app** (or **Add to Home Screen**), or accept the install banner if it shows.
+3. Open it from the icon. Allow the microphone when asked; if you refused it, tap the lock icon in the address bar of a normal tab (or **Settings ▸ Apps ▸ PLAY.Pocket ▸ Permissions**).
+
+MIDI keyboards and pads over USB or Bluetooth work in Chrome (Web MIDI).
+
+### Desktop (Windows, macOS, Linux, ChromeOS)
+
+1. Open the page in **Chrome** or **Edge** and click the install icon at the right end of the address bar (or menu ▸ **Install PLAY.Pocket**).
+2. It opens in its own window and can be pinned to the taskbar or dock.
+3. Firefox and Safari on desktop can use the page in a tab, but do not install it; Firefox also has Web MIDI, Safari does not.
+
+### Good to know
+
+- **Updates:** whenever it is online the app fetches the newest version; close and reopen it to run it.
+- **Your data** lives in the browser's storage for this site (the installed app and a tab of the same browser share it). Export the board and save the loops and tracks you want to keep before clearing browser data or switching device.
+
+### Why is there a service worker (`sw.js`)?
+
+Browsers only allow an app to work offline, and only offer to install it, if the site registers a **service worker**: a small script that sits between the page and the network. This one does a single job: on the first visit it saves the app's own files (`index.html`, the manifest and the icons) in the browser's cache, and afterwards it answers from that cache when you are offline. It asks the network first, so when you are online you always get the latest version. It cannot be part of `index.html`, because browsers load it as a separate file, and it never touches your songs, recordings, microphone or MIDI, and sends nothing anywhere.
 
 ## Browsers and systems: what works where
 
@@ -63,6 +140,17 @@ Under about 30 ms it feels like an amp; up to 60 ms it is playable with a little
 
 PLAY.Pocket is released under the MIT License (see `LICENSE`).
 
+AI assisted coding uses the uncredited work of a lot of coders through the years (me included) so anything I make that's not for work its as free as possible.
+
+Have fun.
+
 ### Third-party code
 
 The banner, app icons and favicons are lettered in [Inter](https://rsms.me/inter/) (SIL Open Font License 1.1), converted to shapes, so no font file is included. The app itself has no third-party code.
+
+## The readmes
+
+Yeah. They are all similar. I copied and pasted. No one ever reads them all. Kilroy was here.
+
+
+Anyway, listen to me: You matter. A lot. I don't know you stranger, but you have my admiration and love. Keep making art.
