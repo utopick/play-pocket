@@ -89,6 +89,16 @@ class Page(unittest.TestCase):
 
 
 class Common(Page):
+    def test_an_fm1_explains_tether_once(self):
+        self.d.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {"source": FAKE_MIDI.replace("'MPK mini Play mk3'", "'FM-1'")})
+        self.open()
+        self.js("document.querySelector('#midiDev').click()"); self.wait(0.9)
+        self.midi(0x90, 53, 100); self.wait(0.2)
+        self.assertIn("Tether", self.js("return document.querySelector('#mdTip h3').textContent"))
+        self.js("document.querySelector('#mdTip [data-t=ok]').click()")
+        self.midi(0x90, 53, 100); self.wait(0.2)
+        self.assertEqual(self.js("return document.querySelectorAll('#mdTip').length"), 0, "the Tether note came back in the same visit")
+
     def test_boots_and_every_view_opens(self):
         self.open(); self.tour(); self.assertClean()
 
